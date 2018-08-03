@@ -19,7 +19,7 @@ I say "lower order" because '/' needs escaping due to the JSON Pointer serializa
 Whereas, '~' is escaped because escaping '/' uses the '~' character.
 */
 function unescape(token: string): string {
-  return token.replace(/~1/g, '/').replace(/~0/g, '~')
+  return token.replace(/~1/g, "/").replace(/~0/g, "~");
 }
 
 /** Escape token part of a JSON Pointer string
@@ -31,30 +31,30 @@ function unescape(token: string): string {
 This is the exact inverse of `unescape()`, so the reverse replacements must take place in reverse order.
 */
 function escape(token: string): string {
-  return token.replace(/~/g, '~0').replace(/\//g, '~1')
+  return token.replace(/~/g, "~0").replace(/\//g, "~1");
 }
 
 export interface PointerEvaluation {
-  parent: any
-  key: string
-  value: any
+  parent: any;
+  key: string;
+  value: any;
 }
 
 /**
 JSON Pointer representation
 */
 export class Pointer {
-  constructor(public tokens = ['']) { }
+  constructor(public tokens = [""]) {}
   /**
   `path` *must* be a properly escaped string.
   */
   static fromJSON(path: string): Pointer {
-    const tokens = path.split('/').map(unescape)
-    if (tokens[0] !== '') throw new Error(`Invalid JSON Pointer: ${path}`)
-    return new Pointer(tokens)
+    const tokens = path.split("/").map(unescape);
+    if (tokens[0] !== "") throw new Error(`Invalid JSON Pointer: ${path}`);
+    return new Pointer(tokens);
   }
   toString(): string {
-    return this.tokens.map(escape).join('/')
+    return this.tokens.map(escape).join("/");
   }
   /**
   Returns an object with 'parent', 'key', and 'value' properties.
@@ -63,36 +63,45 @@ export class Pointer {
   Otherwise, parent and key will have the property such that parent[key] == value.
   */
   evaluate(object: any): PointerEvaluation {
-    let parent: any = null
-    let key = ''
-    let value = object
+    let parent: any = null;
+    let key = "";
+    let value = object;
     for (let i = 1, l = this.tokens.length; i < l; i++) {
-      parent = value
-      key = this.tokens[i]
-      if (key == '__proto__' || key == 'constructor' || key == 'prototype') {
-        continue
+      parent = value;
+      key = this.tokens[i];
+      if (key == "__proto__" || key == "constructor" || key == "prototype") {
+        continue;
       }
       // not sure if this the best way to handle non-existant paths...
-      value = (parent || {})[key]
+      if (parent) {
+        value = parent.getValueForPointer(key);
+      } else {
+        value = undefined;
+      }
+      // value = (parent || {})[key]
     }
-    return {parent, key, value}
+    return { parent, key, value };
   }
   get(object: any): any {
-    return this.evaluate(object).value
+    return this.evaluate(object).value;
   }
   set(object: any, value: any): void {
-    let cursor: any = object
-    for (let i = 1, l = this.tokens.length - 1, token = this.tokens[i]; i < l; i++) {
+    let cursor: any = object;
+    for (
+      let i = 1, l = this.tokens.length - 1, token = this.tokens[i];
+      i < l;
+      i++
+    ) {
       // not sure if this the best way to handle non-existant paths...
-      cursor = (cursor || {})[token]
+      cursor = (cursor || {})[token];
     }
     if (cursor) {
-      cursor[this.tokens[this.tokens.length - 1]] = value
+      cursor[this.tokens[this.tokens.length - 1]] = value;
     }
   }
   push(token: string): void {
     // mutable
-    this.tokens.push(token)
+    this.tokens.push(token);
   }
   /**
   `token` should be a String. It'll be coerced to one anyway.
@@ -100,7 +109,7 @@ export class Pointer {
   immutable (shallowly)
   */
   add(token: string): Pointer {
-    const tokens = this.tokens.concat(String(token))
-    return new Pointer(tokens)
+    const tokens = this.tokens.concat(String(token));
+    return new Pointer(tokens);
   }
 }

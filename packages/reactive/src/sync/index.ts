@@ -1,6 +1,6 @@
 import io from "socket.io-client";
 import Lamport from "../lamport";
-import ObservableObject from "../observables/observable-object";
+import ObservableObject from "../observables/object/observable-object";
 
 /**
  * We can do two things,

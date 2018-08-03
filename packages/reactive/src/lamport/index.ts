@@ -1,3 +1,31 @@
+export type TimestampValue = {
+  actorId: string;
+  seq: number;
+};
+
+export class Timestamp {
+  timestamp: TimestampValue;
+
+  constructor(actorId: string = "", seq: number = 1) {
+    this.timestamp = {
+      actorId,
+      seq,
+    };
+  }
+
+  lessThan(timestamp: Timestamp) {
+    if (this.timestamp.seq < timestamp.timestamp.seq) {
+      return true;
+    } else if (this.timestamp.seq === timestamp.timestamp.seq) {
+      return this.timestamp.actorId < timestamp.timestamp.actorId;
+    }
+  }
+
+  increment() {
+    this.timestamp.seq++;
+  }
+}
+
 export default class Lamport {
   _timestamps: { [pathName: string]: number };
 
