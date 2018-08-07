@@ -147,7 +147,7 @@ export default function ObservableObject(
 
     if (key in _object) {
       const objectValue = _object[key];
-      if (timestamp.lessThan(objectValue.timestamp)) {
+      if (objectValue.timestamp.lessThan(timestamp)) {
         _object[key].timestamp = timestamp;
         _object[key].value = transformedValue;
         _object[key].tombstone = false;

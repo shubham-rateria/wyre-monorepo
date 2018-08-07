@@ -4,7 +4,7 @@ import { Key } from "./key/key";
 import { Timestamp, TimestampValue } from "../../lamport/index";
 import isPrimitiveType from "../../helpers/isPrimitiveType";
 import { TPatch } from "../../types/patch.type";
-import { apply } from "./patch/patch";
+import { apply, convertIndexedToCrdtPath } from "./patch/patch";
 
 const MIN_ARR_VALUE = 0;
 const MAX_ARR_INIT_VALUE = 0.9;
@@ -52,6 +52,10 @@ export default function ObservableArray(items, onChange, actorId = "") {
           return _array[index].value;
         },
         set: function (v) {
+          /**
+           * index may or may not be in the array
+           */
+
           _array[index].timestamp.increment();
           _array[index].timestamp.timestamp.actorId = _actorId;
           _array[index].value = v;
@@ -65,6 +69,19 @@ export default function ObservableArray(items, onChange, actorId = "") {
       });
     }
   }
+
+  function getRawValue(key: string) {
+    return _array[key];
+  }
+
+  Object.defineProperty(_self, "getRawValue", {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function (key: string) {
+      return getRawValue(key);
+    },
+  });
 
   Object.defineProperty(_self, "setValueFromPatch", {
     enumerable: false,
@@ -83,12 +100,14 @@ export default function ObservableArray(items, onChange, actorId = "") {
 
       console.log(
         "[settingvaluefromtpatch]",
+        index,
         timestamp,
         rawValue,
         timestamp.lessThan(rawValue.timestamp)
       );
 
-      if (timestamp.lessThan(rawValue.timestamp)) {
+      if (rawValue.timestamp.lessThan(timestamp)) {
+        console.log("[settingvaluefrompatch]", index, value);
         _array[index].value = value;
         _array[index].timestamp = timestamp;
       }
@@ -118,35 +137,45 @@ export default function ObservableArray(items, onChange, actorId = "") {
     /**
      * generate a patch based on the event type and call
      * onChange with the patch
+     *
+     * event path should always be a crdt key rather than
+     * blank index
      */
+
     if (event.type === "itemchanged") {
       const patch: TPatch = {
         op: "replace",
-        path: `/${event.path}`,
+        path: event.path,
         value: event.value,
         actorId: event.timestamp.actorId,
         seq: event.timestamp.seq,
       };
+      const modPath = convertIndexedToCrdtPath(_self, patch);
+      patch.path = modPath;
       onChange(patch);
     }
     if (event.type === "itemadded") {
-      const patch = {
+      const patch: TPatch = {
         op: "add",
-        path: `/${event.path}`,
+        path: event.path,
         value: event.value,
         actorId: event.timestamp.actorId,
         seq: event.timestamp.seq,
       };
+      const modPath = convertIndexedToCrdtPath(_self, patch);
+      patch.path = modPath;
       onChange(patch);
     }
     if (event.type === "itemdeleted") {
-      const patch = {
+      const patch: TPatch = {
         op: "remove",
-        path: `/${event.path}`,
+        path: event.path,
         value: event.value,
         actorId: event.timestamp.actorId,
         seq: event.timestamp.seq,
       };
+      const modPath = convertIndexedToCrdtPath(_self, patch);
+      patch.path = modPath;
       onChange(patch);
     }
 
@@ -160,11 +189,17 @@ export default function ObservableArray(items, onChange, actorId = "") {
     writable: false,
     configurable: false,
     value: function (key: string) {
+      let index: number = -1;
       for (let i = 0; i < _array.length; i++) {
-        if (_array[i].key.isEqual(Key.fromString(key))) {
-          return i;
+        console.log(
+          "[findIndex]",
+          _array[i].key.toString() === Key.fromString(key).toString()
+        );
+        if (_array[i].key.toString() === Key.fromString(key).toString()) {
+          index = i;
         }
       }
+      return index;
     },
   });
 
@@ -319,7 +354,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
           // item: arguments[i],
           // TODO: do we need to convert this to
           // array Key string?
-          path: "/" + i,
+          path: "/" + index,
           timestamp: timestamp.timestamp,
           value: arguments[i],
         });
