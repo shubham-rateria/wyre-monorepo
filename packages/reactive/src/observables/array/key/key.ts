@@ -2,12 +2,10 @@ export class Key {
   /**
    * A key is represented in string as {actorId}/{fractionalId}
    */
-  actorId: string;
   fractionalId: number;
   static delimiter: string = "$";
 
-  constructor(actorId: string, fractionalId: string) {
-    this.actorId = actorId;
+  constructor(fractionalId: string) {
     this.fractionalId = parseFloat(fractionalId);
   }
 
@@ -16,8 +14,6 @@ export class Key {
       return true;
     } else if (this.fractionalId > key.fractionalId) {
       return false;
-    } else if (this.fractionalId === key.fractionalId) {
-      return this.actorId < key.actorId;
     }
     return false;
   }
@@ -33,8 +29,6 @@ export class Key {
       this.fractionalId !== key.fractionalId
     ) {
       return false;
-    } else if (this.fractionalId === key.fractionalId) {
-      return this.actorId > key.actorId;
     }
     return false;
   }
@@ -50,38 +44,40 @@ export class Key {
       this.fractionalId !== key.fractionalId
     ) {
       return false;
-    } else if (this.fractionalId === key.fractionalId) {
-      return this.actorId >= key.actorId;
     }
     return false;
   }
 
   static fromString(value: string) {
-    const values = value.split(Key.delimiter);
-
-    if (values.length === 2) {
-      return new Key(values[0], values[1]);
-    } else if (values.length === 1) {
-      return new Key(values[0], "");
-    } else {
-      throw new Error("Unparseable key:" + value);
+    const tokens = value.split(Key.delimiter);
+    if (tokens.length === 2) {
+      return new Key(tokens[1]);
     }
+    throw new Error("Invalid token");
   }
 
-  static generateString(actorId: string, fractionalId: number) {
-    return `${actorId}${Key.delimiter}${fractionalId}`;
+  static generateString(fractionalId: number) {
+    return `${fractionalId}`;
   }
 
-  static generateBetween(actorId: string, startId: string, endId: string) {
+  static generateBetween(startId: string, endId: string): Key {
     const start: number = Key.fromString(startId).fractionalId;
     const end: number = Key.fromString(endId).fractionalId;
 
     const fractionalId = (start + end) / 2;
 
-    return `${actorId}${Key.delimiter}/${fractionalId}`;
+    return new Key(fractionalId.toString());
   }
 
   static isCrdtKey(key: string) {
     return key.includes(Key.delimiter);
+  }
+
+  isEqual(compareKey: Key): boolean {
+    return this.toString() === compareKey.toString();
+  }
+
+  toString() {
+    return `${Key.delimiter}${this.fractionalId}`;
   }
 }

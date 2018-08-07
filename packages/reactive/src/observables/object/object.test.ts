@@ -47,7 +47,14 @@ describe("testing observable objects", () => {
       expect(rawValue.timestamp.timestamp.actorId).toBe(actors[0]);
     }
   });
-  test("obj:delete should tombstone value", () => {});
+  test("obj:delete should tombstone value", () => {
+    const obj = { arr: [1, 2], text: "some value", counter: 0 };
+    const obs = new ObservableObject(obj, (patch: any) => {}, actors[0]);
+    obs.delete("text");
+    const rawValue = obs.getRawValue("text");
+    expect(rawValue.tombstone).toBe(true);
+    expect(obs.text).toBeUndefined();
+  });
   test("obj:deleted key should not be shown", () => {});
   test("obj:child object should be correct type:arr", () => {});
   test("obj:child object should be correct type:obj", () => {});
@@ -135,4 +142,6 @@ describe("testing situations", () => {
      */
     expect(obs.key).toBe("val1");
   });
+
+  test("what happens when things arrive out of order", () => {});
 });

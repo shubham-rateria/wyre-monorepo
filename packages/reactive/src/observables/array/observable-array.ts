@@ -1,14 +1,32 @@
 import { applyPatch } from "../../rfc6902";
 import ObservableObject from "../object/observable-object";
-import { Key } from "./key";
+import { Key } from "./key/key";
+import { Timestamp, TimestampValue } from "../../lamport/index";
+import isPrimitiveType from "../../helpers/isPrimitiveType";
+import { TPatch } from "../../types/patch.type";
+import { apply } from "./patch/patch";
 
 const MIN_ARR_VALUE = 0;
 const MAX_ARR_INIT_VALUE = 0.9;
 const MAX_ARR_VALUE = 1;
 
 type ArrayValue = {
-  key: string;
+  key: Key;
   value: any;
+  tombstone: boolean;
+  timestamp: Timestamp;
+  isPrimitive: boolean;
+};
+
+type TSimpleValue = number | string | null | undefined | object;
+
+type TEventTypes = "itemchanged" | "itemadded" | "itemdeleted" | "iteminserted";
+
+type TEvent = {
+  type: TEventTypes;
+  path: string;
+  value?: TSimpleValue;
+  timestamp: TimestampValue;
 };
 
 export default function ObservableArray(items, onChange, actorId = "") {
@@ -18,10 +36,10 @@ export default function ObservableArray(items, onChange, actorId = "") {
      */
     _array: ArrayValue[] = [],
     _actorId: string = actorId,
-    _handlers = {
+    _handlers: { [key: string]: any[] } = {
       itemadded: [],
-      itemremoved: [],
-      itemset: [],
+      itemdeleted: [],
+      itemchanged: [],
       iteminsert: [],
     };
 
@@ -34,16 +52,48 @@ export default function ObservableArray(items, onChange, actorId = "") {
           return _array[index].value;
         },
         set: function (v) {
+          _array[index].timestamp.increment();
+          _array[index].timestamp.timestamp.actorId = _actorId;
           _array[index].value = v;
           raiseEvent({
-            type: "itemset",
-            index: index,
-            item: v,
+            type: "itemchanged",
+            path: "/" + index,
+            timestamp: _array[index].timestamp.timestamp,
+            value: v,
           });
         },
       });
     }
   }
+
+  Object.defineProperty(_self, "setValueFromPatch", {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function (
+      index: number,
+      value: any,
+      timestampValue: TimestampValue
+    ) {
+      const timestamp = new Timestamp(
+        timestampValue.actorId,
+        timestampValue.seq
+      );
+      const rawValue = _array[index];
+
+      console.log(
+        "[settingvaluefromtpatch]",
+        timestamp,
+        rawValue,
+        timestamp.lessThan(rawValue.timestamp)
+      );
+
+      if (timestamp.lessThan(rawValue.timestamp)) {
+        _array[index].value = value;
+        _array[index].timestamp = timestamp;
+      }
+    },
+  });
 
   // Object.defineProperty(_self, "insert", {
   //   configurable: false,
@@ -64,32 +114,38 @@ export default function ObservableArray(items, onChange, actorId = "") {
   //   },
   // });
 
-  function raiseEvent(event) {
+  function raiseEvent(event: TEvent) {
     /**
      * generate a patch based on the event type and call
      * onChange with the patch
      */
-    if (event.type === "itemset") {
-      const patch = {
+    if (event.type === "itemchanged") {
+      const patch: TPatch = {
         op: "replace",
-        path: `/${event.index}`,
-        value: event.item,
+        path: `/${event.path}`,
+        value: event.value,
+        actorId: event.timestamp.actorId,
+        seq: event.timestamp.seq,
       };
       onChange(patch);
     }
     if (event.type === "itemadded") {
       const patch = {
         op: "add",
-        path: `/${event.index}`,
-        value: event.item,
+        path: `/${event.path}`,
+        value: event.value,
+        actorId: event.timestamp.actorId,
+        seq: event.timestamp.seq,
       };
       onChange(patch);
     }
-    if (event.type === "itemremoved") {
+    if (event.type === "itemdeleted") {
       const patch = {
         op: "remove",
-        path: `/${event.index}`,
-        value: event.item,
+        path: `/${event.path}`,
+        value: event.value,
+        actorId: event.timestamp.actorId,
+        seq: event.timestamp.seq,
       };
       onChange(patch);
     }
@@ -105,7 +161,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
     configurable: false,
     value: function (key: string) {
       for (let i = 0; i < _array.length; i++) {
-        if (_array[i].key === key) {
+        if (_array[i].key.isEqual(Key.fromString(key))) {
           return i;
         }
       }
@@ -133,7 +189,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
       const compareKey = Key.fromString(key);
 
       for (let i = 0; i < _array.length; i++) {
-        const key = Key.fromString(_array[i].key);
+        const key = _array[i].key;
         if (key.lessThan(compareKey)) {
           index = i;
         }
@@ -169,77 +225,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
        *
        */
 
-      let path = "";
-      let parent: any = null;
-      let key = "";
-      let value = _self;
-      const tokens = patch.path.split("/").filter((val) => val !== "");
-
-      console.log("[applypatch]:tokens", tokens);
-
-      for (const token of tokens) {
-        console.log("[applypatch]:isKey", Key.isCrdtKey(token));
-
-        if (!Key.isCrdtKey(token)) {
-          console.log("[applypatch]:processingNonToken", token, value);
-
-          path += "/" + token;
-          parent = value;
-          value = parent[key];
-          continue;
-        }
-
-        console.log("[applypatch]:processingToken", token, value);
-
-        /**
-         * Find the index
-         */
-
-        let index: number;
-
-        if (patch.op === "replace") {
-          index = value.findIndex(token);
-          if (!index) {
-            throw new Error("could not find index" + token);
-          }
-        } else {
-          index = value.getIndexFromCrdtKey(token);
-        }
-
-        console.log("[applypatch]:index", token, index);
-
-        path += "/" + index.toString();
-
-        /**
-         * parent[index] in this case has to be a crdt array
-         */
-        parent = value;
-
-        /**
-         * in case of adding to the end,
-         * the parent[index] will be undefined
-         */
-        if (parent[index]) {
-          value = parent[index].value;
-        }
-      }
-
-      patch.path = path;
-
-      /**
-       * Determine the last token
-       * if it is a crdt array key,
-       * the patch value needs to change to reflect ArrayValue
-       */
-
-      if (Key.isCrdtKey(tokens.reverse()[0])) {
-        patch.value = {
-          key: tokens.reverse()[0],
-          value: patch.value,
-        };
-      }
-
-      const res: any[] = applyPatch(_array, [patch]);
+      const res = apply(_self, patch);
 
       console.log("[patch:res]", _array);
 
@@ -247,11 +233,11 @@ export default function ObservableArray(items, onChange, actorId = "") {
        * if it an add or remove operation
        * assign index property
        */
-      if (res.length > 0) {
-        if (res[0]) {
-          defineIndexProperty(res[0]);
-        }
-      }
+      // if (res.length > 0) {
+      //   if (res[0]) {
+      //     defineIndexProperty(res[0]);
+      //   }
+      // }
     },
   });
 
@@ -296,25 +282,31 @@ export default function ObservableArray(items, onChange, actorId = "") {
          * calculate key index
          */
 
-        let newKey: string;
+        const timestamp = new Timestamp(_actorId);
+        let newKey: Key;
 
         if (_array.length > 0) {
           const lastKey = _array.reverse()[0].key;
           newKey = Key.generateBetween(
-            _actorId,
-            lastKey,
-            Key.generateString(_actorId, MAX_ARR_VALUE)
+            lastKey.toString(),
+            new Key(MAX_ARR_VALUE.toString()).toString()
           );
           const value: ArrayValue = {
             key: newKey,
             value: arguments[i],
+            isPrimitive: isPrimitiveType(arguments[i]) || false,
+            timestamp,
+            tombstone: false,
           };
           _array.push(value);
         } else {
-          newKey = Key.generateString(_actorId, 0);
+          newKey = new Key(MIN_ARR_VALUE.toString());
           const value: ArrayValue = {
             key: newKey,
             value: arguments[i],
+            isPrimitive: isPrimitiveType(arguments[i]) || false,
+            timestamp,
+            tombstone: false,
           };
           _array.push(value);
         }
@@ -323,8 +315,13 @@ export default function ObservableArray(items, onChange, actorId = "") {
         defineIndexProperty(index);
         raiseEvent({
           type: "itemadded",
-          index: newKey,
-          item: arguments[i],
+          // index: newKey,
+          // item: arguments[i],
+          // TODO: do we need to convert this to
+          // array Key string?
+          path: "/" + i,
+          timestamp: timestamp.timestamp,
+          value: arguments[i],
         });
       }
       return _array.length;
@@ -341,7 +338,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
   //         item = _array.pop();
   //       delete _self[index];
   //       raiseEvent({
-  //         type: "itemremoved",
+  //         type: "itemdeleted",
   //         index: index,
   //         item: item,
   //       });
@@ -384,7 +381,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
   //       var item = _array.shift();
   //       delete _self[_array.length];
   //       raiseEvent({
-  //         type: "itemremoved",
+  //         type: "itemdeleted",
   //         index: 0,
   //         item: item,
   //       });
@@ -412,7 +409,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
   //       removed.push(item);
   //       delete _self[_array.length];
   //       raiseEvent({
-  //         type: "itemremoved",
+  //         type: "itemdeleted",
   //         index: index + removed.length - 1,
   //         item: item,
   //       });
@@ -471,7 +468,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
      * calculate index values
      */
 
-    const step = MAX_ARR_INIT_VALUE / items.length;
+    const step = MAX_ARR_INIT_VALUE / (items.length - 1);
 
     for (let i = 0; i < items.length; i++) {
       let item: any = items[i];
@@ -479,7 +476,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
        * on initial load, we don't want actor id to be in the key
        * to prevent problems during initial load sync
        */
-      let key: string = Key.generateString("", step * i);
+      let key = new Key((step * i).toString());
 
       if (typeof item === "object" && !Array.isArray(item) && item !== null) {
         item = new ObservableObject(item, handleNonPrimitiveChildChange(key));
@@ -490,11 +487,12 @@ export default function ObservableArray(items, onChange, actorId = "") {
       const arrayItem: ArrayValue = {
         key,
         value: item,
+        isPrimitive: isPrimitiveType(arguments[i]) || false,
+        timestamp: new Timestamp(),
+        tombstone: false,
       };
       _array.push(arrayItem);
       defineIndexProperty(i);
     }
-
-    // console.log(_array);
   }
 }
