@@ -27,9 +27,6 @@ export default function ObservableObject(
 ) {
   var _self = this,
     _object: { [key: string]: TValue } = {},
-    _handlers = {
-      itemchanged: [],
-    },
     _actorId = actorId;
 
   function getValueToSet(key: string, value: TSimpleValue) {
@@ -177,8 +174,15 @@ export default function ObservableObject(
      * compare timestamps, and whichever is lower, apply that to the object
      */
 
+    /**
+     * TODO: Decide what to do if key is NOT present
+     */
+
     const value = _object[key];
-    if (timestamp.lessThan(value.timestamp)) {
+
+    console.log("[deletefrompatch]", value, key, timestamp);
+
+    if (value.timestamp.lessThan(timestamp)) {
       _object[key].tombstone = true;
       _object[key].timestamp = timestamp;
     }
@@ -239,17 +243,17 @@ export default function ObservableObject(
     },
   });
 
-  Object.defineProperty(_self, "addEventListener", {
-    configurable: false,
-    enumerable: false,
-    writable: false,
-    value: function (eventName, handler) {
-      eventName = ("" + eventName).toLowerCase();
-      if (!(eventName in _handlers)) throw new Error("Invalid event name.");
-      if (typeof handler !== "function") throw new Error("Invalid handler.");
-      _handlers[eventName].push(handler);
-    },
-  });
+  // Object.defineProperty(_self, "addEventListener", {
+  //   configurable: false,
+  //   enumerable: false,
+  //   writable: false,
+  //   value: function (eventName, handler) {
+  //     eventName = ("" + eventName).toLowerCase();
+  //     if (!(eventName in _handlers)) throw new Error("Invalid event name.");
+  //     if (typeof handler !== "function") throw new Error("Invalid handler.");
+  //     _handlers[eventName].push(handler);
+  //   },
+  // });
 
   Object.defineProperty(_self, "applyPatch", {
     configurable: false,
@@ -298,9 +302,16 @@ export default function ObservableObject(
       onChange(patch);
     }
 
-    _handlers[event.type]?.forEach(function (h) {
-      h.call(_self, event);
-    });
+    if (event.type === "itemdeleted") {
+      const patch = {
+        op: "delete",
+        path: event.path,
+        value: event.value,
+        actorId: event.timestamp.actorId,
+        seq: event.timestamp.seq,
+      };
+      onChange(patch);
+    }
   }
 
   function handleNonPrimitiveChildChange(childName) {
