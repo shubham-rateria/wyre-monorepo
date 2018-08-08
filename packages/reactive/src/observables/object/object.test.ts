@@ -53,12 +53,45 @@ describe("testing observable objects", () => {
     obs.delete("text");
     const rawValue = obs.getRawValue("text");
     expect(rawValue.tombstone).toBe(true);
-    expect(obs.text).toBeUndefined;
+    expect(obs.text).toBeUndefined();
   });
   test("obj:deleted key should not be shown", () => {});
-  test("obj:child object should be correct type:arr", () => {});
-  test("obj:child object should be correct type:obj", () => {});
-  test("obj:child object should be correct type:primitive", () => {});
+  test("obj:child:arr patch should work", async () => {
+    const obj = { obj: { key: [1, 2, { key: "val" }] } };
+    const patches: TPatch[] = [];
+    const obs = new ObservableObject(
+      obj,
+      (patch: any) => {
+        console.log("[nested child]", patch);
+        patches.push(patch);
+      },
+      actors[1]
+    );
+    obs.obj.key[2].key = "val1";
+    await sleep(100);
+    const obs1 = new ObservableObject(obj, () => {}, actors[0]);
+    obs1.applyPatch(patches[0]);
+    expect(obs1.obj.key[2].key).toBe("val1");
+  });
+  test("obj:child:object should be correct type:obj", () => {});
+  test("obj:child:object should be correct type:primitive", () => {});
+  test("obj:child:object patch should work", async () => {
+    const obj = { obj: { key: "val" } };
+    const patches: TPatch[] = [];
+    const obs = new ObservableObject(
+      obj,
+      (patch: any) => {
+        console.log("[nested child]", patch);
+        patches.push(patch);
+      },
+      actors[1]
+    );
+    obs.obj.key = "val1";
+    await sleep(100);
+    const obs1 = new ObservableObject(obj, () => {}, actors[0]);
+    obs1.applyPatch(patches[0]);
+    expect(obs1.obj.key).toBe("val1");
+  });
   test("obj:patch:add", () => {
     const patch: TPatch = {
       actorId: actors[0],
@@ -80,6 +113,70 @@ describe("testing observable objects", () => {
       path: "/newKey",
       value: "newValue",
     };
+  });
+  test("patch:delete", () => {
+    const patch: TPatch = {
+      actorId: actors[0],
+      seq: 2,
+      op: "remove",
+      path: "/key",
+    };
+    const obj = { key: "value" };
+    const obs = new ObservableObject(obj, () => {});
+    obs.applyPatch(patch);
+    expect(obs.key).toBeUndefined();
+  });
+  test("patch:delete:generate", () => {
+    const patches: TPatch[] = [];
+    const obj = { key: "value" };
+    const obs1 = new ObservableObject(obj, (patch: TPatch) => {
+      patches.push(patch);
+    });
+    obs1.delete("key");
+    expect(patches.length).toBe(1);
+    expect(patches[0].path).toBe("/key");
+  });
+});
+
+describe("nested patches", () => {
+  test("nested:1:array:change", () => {
+    const obj = { key: [1, 2, 3] };
+    const obs = new ObservableObject(obj, () => {});
+    const patch: TPatch = {
+      op: "replace",
+      path: "/key/$0",
+      actorId: "",
+      seq: 2,
+      value: 10,
+    };
+    obs.applyPatch(patch);
+    expect(obs.key[0]).toBe(10);
+  });
+  test("nested:2:array:change", () => {
+    const obj = { key: [{ key: [1, 2, 3] }] };
+    const obs = new ObservableObject(obj, () => {});
+    const patch: TPatch = {
+      op: "replace",
+      path: "/key/$0/key/$0",
+      actorId: "",
+      seq: 2,
+      value: 10,
+    };
+    obs.applyPatch(patch);
+    expect(obs.key[0].key[0]).toBe(10);
+  });
+  test("nested:1:object:change", () => {
+    const obj = { key: { key: "value" } };
+    const obs = new ObservableObject(obj, () => {});
+    const patch: TPatch = {
+      op: "replace",
+      path: "/key/key",
+      actorId: "",
+      seq: 2,
+      value: 10,
+    };
+    obs.applyPatch(patch);
+    expect(obs.key.key).toBe(10);
   });
 });
 
@@ -144,4 +241,8 @@ describe("testing situations", () => {
   });
 
   test("what happens when things arrive out of order", () => {});
+});
+
+describe("multi user sync test", () => {
+  test("sync:multi:user", async () => {});
 });
