@@ -43,31 +43,37 @@ export default function ObservableArray(items, onChange, actorId = "") {
       iteminsert: [],
     };
 
-  function defineIndexProperty(index) {
-    if (!(index in _self)) {
-      Object.defineProperty(_self, index, {
-        configurable: true,
-        enumerable: true,
-        get: function () {
-          return _array[index].value;
-        },
-        set: function (v) {
-          /**
-           * index may or may not be in the array
-           */
+  function defineIndexProperty(index: string | number) {
+    Object.defineProperty(_self, index, {
+      configurable: true,
+      enumerable: true,
+      get: function () {
+        if (Key.isCrdtKey(index.toString())) {
+          index = _self.findIndex(index);
+        }
+        return _array[index].value;
+      },
+      set: function (v) {
+        /**
+         * index may or may not be in the array
+         */
 
-          _array[index].timestamp.increment();
-          _array[index].timestamp.timestamp.actorId = _actorId;
-          _array[index].value = v;
-          raiseEvent({
-            type: "itemchanged",
-            path: "/" + index,
-            timestamp: _array[index].timestamp.timestamp,
-            value: v,
-          });
-        },
-      });
-    }
+        /**
+         * we have to check if the index is a crdt key
+         * or not and process accordingly
+         */
+
+        _array[index].timestamp.increment();
+        _array[index].timestamp.timestamp.actorId = _actorId;
+        _array[index].value = v;
+        raiseEvent({
+          type: "itemchanged",
+          path: "/" + index,
+          timestamp: _array[index].timestamp.timestamp,
+          value: v,
+        });
+      },
+    });
   }
 
   function getRawValue(key: string) {
@@ -88,28 +94,86 @@ export default function ObservableArray(items, onChange, actorId = "") {
     configurable: false,
     writable: false,
     value: function (
-      index: number,
+      index: number | string,
       value: any,
       timestampValue: TimestampValue
     ) {
+      if (!Key.isCrdtKey(index.toString())) {
+        throw new Error("Only CRDT keys can be used to apply patch on array.");
+      }
+
       const timestamp = new Timestamp(
         timestampValue.actorId,
         timestampValue.seq
       );
-      const rawValue = _array[index];
 
-      console.log(
-        "[settingvaluefromtpatch]",
-        index,
-        timestamp,
-        rawValue,
-        timestamp.lessThan(rawValue.timestamp)
-      );
+      index = _self.findIndex(index);
+
+      const rawValue = _array[index];
+      console.log("[settingvaluefromtpatch]", index, timestamp, rawValue);
 
       if (rawValue.timestamp.lessThan(timestamp)) {
         console.log("[settingvaluefrompatch]", index, value);
         _array[index].value = value;
         _array[index].timestamp = timestamp;
+      }
+    },
+  });
+
+  Object.defineProperty(_self, "addNewValueFromPatch", {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function (
+      index: number | string,
+      value: any,
+      timestampValue: TimestampValue
+    ) {
+      /**
+       * Check if key exists.
+       * If it does, compare the timestamp
+       * If the timestamp is greater than the one
+       * I have, update the key.
+       * Else do not.
+       */
+
+      if (!Key.isCrdtKey(index.toString())) {
+        throw new Error("Only CRDT keys can be used to apply patch on array.");
+      }
+
+      const timestamp = new Timestamp(
+        timestampValue.actorId,
+        timestampValue.seq
+      );
+
+      if (index in _array) {
+        const rawValue = _array[index];
+        console.log("[settingvaluefromtpatch]", index, timestamp, rawValue);
+
+        if (rawValue.timestamp.lessThan(timestamp)) {
+          console.log("[settingvaluefrompatch]", index, value);
+          _array[index].value = value;
+          _array[index].timestamp = timestamp;
+        }
+      } else {
+        const rawValue: ArrayValue = {
+          value: value,
+          timestamp: timestamp,
+          isPrimitive: isPrimitiveType(value) || false,
+          key: new Key(index.toString()),
+          tombstone: false,
+        };
+
+        /**
+         * Set the value and index property.
+         * Sort the array
+         */
+
+        const key = index;
+        index = _self.findIndex(key);
+        _array[index] = rawValue;
+        defineIndexProperty(index);
+        defineIndexProperty(index);
       }
     },
   });
@@ -503,7 +567,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
      * calculate index values
      */
 
-    const step = MAX_ARR_INIT_VALUE / (items.length - 1);
+    const step = MAX_ARR_INIT_VALUE / items.length;
 
     for (let i = 0; i < items.length; i++) {
       let item: any = items[i];
@@ -528,6 +592,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
       };
       _array.push(arrayItem);
       defineIndexProperty(i);
+      defineIndexProperty(key.toString());
     }
   }
 }
