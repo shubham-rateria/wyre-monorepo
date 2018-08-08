@@ -3,6 +3,7 @@ import ObservableArray from "./observable-array";
 import { TPatch } from "../../types/patch.type";
 import { Key } from "./key/key";
 import { getTokens } from "./patch/patch";
+import { serializeArray } from "../utils/serialize";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -56,16 +57,15 @@ describe("tests for array", () => {
   test("patch:replace", () => {
     const patch: TPatch = {
       op: "replace",
-      path: "/$0.45",
+      path: "/$0",
       value: 10,
       seq: 1,
       actorId: "a",
     };
     const items = [1, 2, 3];
     const arr = new ObservableArray(items, console.log, "b");
-    console.log(arr);
     arr.applyPatch(patch);
-    expect(arr[1]).toBe(10);
+    expect(arr[0]).toBe(10);
   }),
     test("patch:path for push", async () => {
       const items = [1, 2, 3];
@@ -81,7 +81,7 @@ describe("tests for array", () => {
       obs1.push(10);
       await sleep(200);
       expect(patches.length).toBe(1);
-      expect(patches[0].path).toBe("/$0.95");
+      // expect(patches[0].path).toBe("/$0.95");
       expect(patches[0].value).toBe(10);
       expect(patches[0].actorId).toBe("a");
     }),
@@ -124,4 +124,32 @@ describe("tests for array", () => {
       expect(obs1[0]).toBe(1);
     });
   test("modify an element", async () => {});
+});
+
+describe("raw values test", () => {
+  let rawValues: any;
+  test("rawvalues:get", () => {
+    const items = [1, 2, 3, { data: "value", arr: [1, 2, 3] }, [1, 2, 3]];
+    const arr = new ObservableArray(items, () => {});
+    rawValues = serializeArray(arr);
+    // console.log("rawValues", JSON.stringify(rawValues, null, 4));
+    expect(rawValues.length).toBe(items.length);
+  });
+  test("rawvalues:set", () => {
+    const arr = new ObservableArray([], () => {});
+    arr.setRawValues(rawValues);
+    console.log("arr", arr, arr[3], arr[3].arr, arr[3].data);
+    expect(arr[0]).toBe(1);
+    expect(arr[1]).toBe(2);
+    expect(arr[2]).toBe(3);
+    expect(arr[3].data).toBe("value");
+    expect(arr[4].length).toBe(3);
+    expect(arr[4][0]).toBe(1);
+    expect(arr[4][1]).toBe(2);
+    expect(arr[4][2]).toBe(3);
+    expect(arr[3].arr.length).toBe(3);
+    expect(arr[3].arr[0]).toBe(1);
+    expect(arr[3].arr[1]).toBe(2);
+    expect(arr[3].arr[2]).toBe(3);
+  });
 });

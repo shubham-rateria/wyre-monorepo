@@ -5,18 +5,19 @@ import { Timestamp, TimestampValue } from "../../lamport/index";
 import isPrimitiveType from "../../helpers/isPrimitiveType";
 import { TPatch } from "../../types/patch.type";
 import { apply, convertIndexedToCrdtPath } from "./patch/patch";
+import { ArraySerializedValue } from "../utils/serialize";
 
 const MIN_ARR_VALUE = 0;
 const MAX_ARR_INIT_VALUE = 0.9;
 const MAX_ARR_VALUE = 1;
 
-type ArrayValue = {
+export interface ArrayValue {
   key: Key;
   value: any;
   tombstone: boolean;
   timestamp: Timestamp;
   isPrimitive: boolean;
-};
+}
 
 type TSimpleValue = number | string | null | undefined | object;
 
@@ -51,6 +52,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
         if (Key.isCrdtKey(index.toString())) {
           index = _self.findIndex(index);
         }
+        console.log("[arr:get]", index, _array[index]);
         return _array[index].value;
       },
       set: function (v) {
@@ -75,6 +77,45 @@ export default function ObservableArray(items, onChange, actorId = "") {
       },
     });
   }
+
+  function setRawValues(values: ArraySerializedValue[]) {
+    for (let i = 0; i < values.length; i++) {
+      const item = values[i];
+      const key = new Key(item.key.fractionalId.toString());
+      if (
+        typeof item.value === "object" &&
+        !Array.isArray(item.value) &&
+        item.value !== null &&
+        !item.isSerialized
+      ) {
+        const newItem = new ObservableObject(
+          {},
+          handleNonPrimitiveChildChange(key.toString())
+        );
+        newItem.setRawValues(item.value);
+        item.value = newItem;
+      } else if (Array.isArray(item.value)) {
+        const newItem = new ObservableArray(
+          [],
+          handleNonPrimitiveChildChange(key.toString())
+        );
+        newItem.setRawValues(item.value);
+        item.value = newItem;
+      }
+      _array.push(item);
+      defineIndexProperty(i);
+      defineIndexProperty(key.toString());
+    }
+  }
+
+  Object.defineProperty(_self, "setRawValues", {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function (values: ArraySerializedValue[]) {
+      setRawValues(values);
+    },
+  });
 
   function getRawValue(key: string) {
     return _array[key];
