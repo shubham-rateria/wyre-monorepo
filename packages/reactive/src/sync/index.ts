@@ -1,6 +1,6 @@
 import io from "socket.io-client";
 import Lamport from "../lamport";
-import ObservableObject from "../observables/observable-object";
+import ObservableObject from "../observables/object/observable-object";
 
 /**
  * We can do two things,
@@ -12,13 +12,13 @@ type SyncParams = {
   obj: any;
 };
 
-export function Sync(obj, onChange) {
+export function Sync(obj, onChange, actorId = "") {
   let socketEndpoint = "http://localhost:3002";
   let socketConfig = { path: "/socket.io" };
   let outputBuffer = [];
   let _io = io(socketEndpoint, socketConfig);
   _io.connect();
-  let _data = new ObservableObject(obj, _onChange);
+  let _data = new ObservableObject(obj, _onChange, actorId);
   let lamports: { [refid: string]: Lamport } = {};
   let registered = false;
 

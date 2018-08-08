@@ -1,3 +1,3 @@
 export * from "./sync";
-export * from "./observables/observable-object";
-export * from "./observables/observable-array";
+export * from "./observables/object/observable-object";
+export * from "./observables/array/observable-array";
