@@ -110,6 +110,11 @@ export default function ObservableObject(
      */
     Object.keys(obj).forEach((key: string) => {
       const item = obj[key];
+      const timestamp = new Timestamp(
+        item.timestamp.timestamp.actorId,
+        item.timestamp.timestamp.seq
+      );
+      item.timestamp = timestamp;
       if (Array.isArray(item.value)) {
         const arr = new ObservableArray(
           [],
