@@ -24,11 +24,11 @@ type TEvent = {
  * @param {Object} object - the object to observe
  * @param {(patch) => void} onChange - triggers when a change on the object happens
  */
-export default function ObservableObject(
+export function ObservableObject(
   object,
   onChange,
   actorId: string = ""
-) {
+): void {
   var _self = this,
     _object: { [key: string]: TValue } = {},
     _actorId = actorId;

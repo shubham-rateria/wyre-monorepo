@@ -1,4 +1,4 @@
-import ObservableObject from "../observable-object";
+import { ObservableObject } from "../observable-object";
 import { evaluate } from "./patch";
 
 describe("test patches utils", () => {

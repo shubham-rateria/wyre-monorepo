@@ -23,7 +23,7 @@ function useForceUpdate() {
 }
 
 const d = {
-  refid: "react-test-refid-30",
+  refid: "react-test-refid-31",
   arr: [1, 2, 3],
   value: 0,
   text: "hello\n",
@@ -66,6 +66,11 @@ const AVATAR_COLORS = [
 function App() {
   const forceUpdate = useForceUpdate();
 
+  const onChange = (patch: any) => {
+    console.log("[onChange]", patch);
+    forceUpdate();
+  };
+
   const [field1, setField1] = React.useState("");
   const [field2, setField2] = React.useState("");
 
@@ -104,13 +109,7 @@ function App() {
     forceUpdate();
   };
 
-  const data = React.useMemo(
-    () =>
-      Sync(d, () => {
-        forceUpdate();
-      }),
-    []
-  );
+  const data = React.useMemo(() => Sync(d, onChange), []);
 
   const init = async () => {
     await data.sync();

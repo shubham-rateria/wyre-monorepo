@@ -1,4 +1,4 @@
-import ObservableObject from "../object/observable-object";
+import { ObservableObject } from "../object/observable-object";
 import ObservableArray from "./observable-array";
 import { TPatch } from "../../types/patch.type";
 import { Key } from "./key/key";
@@ -102,7 +102,7 @@ describe("tests for array", () => {
       obs2.applyPatch(patches[0]);
       expect(obs2[0]).toBe(10);
     }),
-    test("patch:one client pushes in the array and patch is sent to others", async () => {
+    test("patch:client:push", async () => {
       const items = [1, 2, 3];
       const patches: any[] = [];
       const obs1 = new ObservableArray(items, (patch) => {
