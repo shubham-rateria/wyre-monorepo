@@ -23,7 +23,7 @@ function useForceUpdate() {
 }
 
 const d = {
-  refid: "react-test-refid-15",
+  refid: "react-test-refid-17",
   arr: [1, 2, 3],
   value: 0,
   text: "hello\n",
@@ -112,6 +112,15 @@ function App() {
     []
   );
 
+  // const init = async () => {
+  //   await data.sync();
+  //   forceUpdate();
+  // };
+
+  React.useEffect(() => {
+    // init();
+  }, []);
+
   return (
     <div className="App">
       <div>
@@ -169,12 +178,12 @@ function App() {
       <Row>
         <Col span={12}>
           <Card title="Timeline">
-            <Timeline>
+            {/* <Timeline>
               {data.data.timelineItems.map((item: string) => (
                 <Timeline.Item>{item}</Timeline.Item>
               ))}
-            </Timeline>
-            <Button onClick={addTimelineValue}>Dispatch</Button>
+            </Timeline> */}
+            {/* <Button onClick={addTimelineValue}>Dispatch</Button> */}
           </Card>
         </Col>
         <Col span={12}>
