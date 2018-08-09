@@ -55,12 +55,14 @@ importers:
       rollup-plugin-esbuild: ^5.0.0
       socket.io-client: 4.1.3
       ts-jest: ^29.0.5
+      tslib: ^2.5.0
       typescript: ^4.9.4
     dependencies:
       socket.io-client: 4.1.3
+      tslib: 2.5.0
     devDependencies:
       '@rollup/plugin-terser': 0.4.0_rollup@3.11.0
-      '@rollup/plugin-typescript': 11.0.0_yjrzni4zyr7xhg3xsvmmijxnvu
+      '@rollup/plugin-typescript': 11.0.0_vawfnn2mrapiufgihzttudvpza
       '@types/jest': 27.5.2
       '@types/mocha': 10.0.1
       esbuild: 0.17.4
@@ -3628,7 +3630,7 @@ packages:
       terser: 5.16.1
     dev: true
 
-  /@rollup/plugin-typescript/11.0.0_yjrzni4zyr7xhg3xsvmmijxnvu:
+  /@rollup/plugin-typescript/11.0.0_vawfnn2mrapiufgihzttudvpza:
     resolution: {integrity: sha512-goPyCWBiimk1iJgSTgsehFD5OOFHiAknrRJjqFCudcW8JtWiBlK284Xnn4flqMqg6YAjVG/EE+3aVzrL5qNSzQ==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -3644,6 +3646,7 @@ packages:
       '@rollup/pluginutils': 5.0.2_rollup@3.11.0
       resolve: 1.22.1
       rollup: 3.11.0
+      tslib: 2.5.0
       typescript: 4.9.4
     dev: true
 
