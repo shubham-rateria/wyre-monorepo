@@ -23,7 +23,7 @@ function useForceUpdate() {
 }
 
 const d = {
-  refid: "react-test-refid-17",
+  refid: "react-test-refid-30",
   arr: [1, 2, 3],
   value: 0,
   text: "hello\n",
@@ -112,13 +112,13 @@ function App() {
     []
   );
 
-  // const init = async () => {
-  //   await data.sync();
-  //   forceUpdate();
-  // };
+  const init = async () => {
+    await data.sync();
+    forceUpdate();
+  };
 
   React.useEffect(() => {
-    // init();
+    init();
   }, []);
 
   return (
