@@ -1,11 +1,10 @@
-import { applyPatch } from "../../rfc6902";
-import { ObservableObject } from "../object/observable-object";
-import { Key } from "./key/key";
-import { Timestamp, TimestampValue } from "../../lamport/index";
 import isPrimitiveType from "../../helpers/isPrimitiveType";
+import { Timestamp, TimestampValue } from "../../lamport/index";
 import { TPatch } from "../../types/patch.type";
-import { apply, convertIndexedToCrdtPath } from "./patch/patch";
+import { ObservableObject } from "../object/observable-object";
 import { ArraySerializedValue } from "../utils/serialize";
+import { Key } from "./key/key";
+import { apply, convertIndexedToCrdtPath } from "./patch/patch";
 
 const MIN_ARR_VALUE = 0;
 const MAX_ARR_INIT_VALUE = 0.9;
@@ -194,13 +193,20 @@ export default function ObservableArray(items, onChange, actorId = "") {
       );
 
       if (_self.findIndex(index) !== -1) {
-        const rawValue = _array[index];
-        console.log("[settingvaluefromtpatch]", index, timestamp, rawValue);
+        const changeIndex = _self.findIndex(index);
+
+        const rawValue = _array[changeIndex];
+        console.log(
+          "[settingvaluefromtpatch]",
+          changeIndex,
+          timestamp,
+          rawValue
+        );
 
         if (rawValue.timestamp.lessThan(timestamp)) {
-          console.log("[settingvaluefrompatch]", index, value);
-          _array[index].value = value;
-          _array[index].timestamp = timestamp;
+          console.log("[settingvaluefrompatch]", changeIndex, value);
+          _array[changeIndex].value = value;
+          _array[changeIndex].timestamp = timestamp;
         }
       } else {
         const rawValue: ArrayValue = {
