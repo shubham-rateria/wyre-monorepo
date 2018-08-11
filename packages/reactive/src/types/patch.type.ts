@@ -4,4 +4,6 @@ export type TPatch = {
   value?: any;
   actorId: string;
   seq: number;
+  collectionName?: string;
+  refid?: string;
 };
