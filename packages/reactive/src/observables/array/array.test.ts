@@ -127,11 +127,51 @@ describe("tests for array", () => {
     });
     obs1.delete(0);
     const rawValue = obs1.getRawValue(0);
-    expect(rawValue.tombstone).toBe(true);
     expect(obs1[0]).toBe(items[1]);
-    expect(patches.length).toBe(1);
-    expect(patches[0].path).toBe("/$0");
-    expect(patches[0].op).toBe("remove");
+    // expect(rawValue.tombstone).toBe(true);
+    // expect(obs1[0]).toBe(items[1]);
+    // expect(patches.length).toBe(1);
+    // expect(patches[0].path).toBe("/$0");
+    // expect(patches[0].op).toBe("remove");
+  });
+  test("arr:delete:2", () => {
+    const items = [
+      { name: "text", done: false, id: 0 },
+      { name: "text", done: false, id: 1 },
+      { name: "text", done: false, id: 2 },
+    ];
+    const d = {
+      todos: items,
+    };
+    const obj = new ObservableObject(d, () => {});
+    obj.todos.delete(1);
+    const values = obj.todos.map((val) => val.id);
+    console.log("[values]", values);
+    expect(values.length).toBe(2);
+  });
+  test("arr:delete:multiple", () => {
+    const items = [
+      { name: "text", done: false, id: 0 },
+      { name: "text", done: false, id: 1 },
+      { name: "text", done: false, id: 2 },
+      { name: "text", done: false, id: 3 },
+      { name: "text", done: false, id: 4 },
+      { name: "text", done: false, id: 5 },
+    ];
+    const d = {
+      todos: items,
+    };
+    const obj = new ObservableObject(d, (patch) => {
+      console.log("[arr:delete:multiple:patch]", patch);
+    });
+    const NUM_VALUES_TO_DELETE = 3;
+    for (let i = 0; i < NUM_VALUES_TO_DELETE; i++) {
+      obj.todos.delete(1);
+    }
+    const values = obj.todos.map((val) => val.id);
+    console.log("[values]", values);
+    expect(values.length).toBe(items.length - NUM_VALUES_TO_DELETE);
+    expect(obj.todos[1].id).toBe(4);
   });
   test("arr:delete:patch", () => {
     const items = [1, 2, 3];
@@ -146,8 +186,8 @@ describe("tests for array", () => {
       patches.push(patch);
     });
     arr.applyPatch(patch);
-    const rawValue: ArrayValue = arr.getRawValue(0);
-    expect(rawValue.tombstone).toBe(true);
+    // const rawValue: ArrayValue = arr.getRawValue(0);
+    // expect(rawValue.tombstone).toBe(true);
     expect(patches.length).toBe(0);
     expect(arr[0]).toBe(items[1]);
   });
@@ -316,4 +356,62 @@ describe("situational tests", () => {
       expect(obj2.todos[i].id).toBeLessThan(obj2.todos[i + 1].id);
     }
   });
+  test("situation:7", () => {
+    /**
+     * array values added from patch should be observable
+     */
+    const obj1 = new ObservableObject({ todos: [] }, (patch) => {
+      console.log("[patch]", patch);
+    });
+    const addPatch = {
+      op: "add",
+      path: "/todos/$0",
+      value: { text: "some-text", value: 1 },
+      actorId: "",
+      seq: 2,
+    };
+    obj1.applyPatch(addPatch);
+    obj1.todos[0].value = 2;
+  }),
+    test("situation:6", () => {
+      /**
+       * When a number of todos are added and then deleted,
+       * then some todos are modified, the evaluate function
+       * is unable to map the correct todo path and thus
+       * the parent comes out to be undefined and patches are
+       * not applied.
+       */
+      const items = [
+        { id: 0, text: "", done: false },
+        { id: 1, text: "", done: false },
+        { id: 2, text: "", done: false },
+        { id: 3, text: "", done: false },
+        { id: 4, text: "", done: false },
+        { id: 5, text: "", done: false },
+        { id: 6, text: "", done: false },
+        { id: 7, text: "", done: false },
+      ];
+      const d = { todos: items };
+      const obj1 = new ObservableObject(d, (patch) => {
+        console.log("[patch]", patch);
+      });
+
+      /**
+       * if I change a specific todo value,
+       * what is the patch that gets generated?
+       */
+      const todo = obj1.todos[3];
+      todo.done = true;
+
+      /**
+       * delete a few values then test again
+       */
+      obj1.todos.delete(1);
+      obj1.todos.delete(1);
+      obj1.todos.delete(1);
+      obj1.todos.delete(1);
+
+      const todo1 = obj1.todos[2];
+      todo1.done = true;
+    });
 });
