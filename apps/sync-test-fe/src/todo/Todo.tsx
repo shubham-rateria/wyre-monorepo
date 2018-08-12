@@ -1,5 +1,5 @@
 import React from "react";
-import { _SyncManager, Sync } from "@sam98231/reactive";
+import { _SyncManager } from "@sam98231/reactive";
 import { Button, Radio, Switch, Input, Col, Row } from "antd";
 
 const SyncManager = new _SyncManager();
@@ -22,16 +22,17 @@ export const Todo: React.FC = () => {
   const [loaded, setLoaded] = React.useState(false);
   const [data, setData] = React.useState<any>([]);
 
-  const onChange = (patch: any) => {
-    console.log("[onChange]", patch);
-    forceUpdate();
-  };
-
   const load = async () => {
     setLoaded(false);
     await SyncManager.init();
-    const data = Sync({ refid: "a-new-refid", todos: [] }, onChange);
-    await data.sync();
+    const data = await SyncManager.create({
+      data: { todos: [] },
+      collectionName: "Todo",
+      onChange() {
+        forceUpdate();
+      },
+      refid: "sample-testing-100",
+    });
     setData(data);
     console.log("loaded data", data);
     setLoaded(true);
@@ -42,7 +43,7 @@ export const Todo: React.FC = () => {
   }, []);
 
   const addNewTodo = () => {
-    data.data.todos.push({
+    data.todos.push({
       text: "",
       done: false,
     });
@@ -72,7 +73,7 @@ export const Todo: React.FC = () => {
         <Button onClick={addNewTodo}>Add New Todo</Button>
       </div>
       <div>
-        {data.data.todos.map((todo: Todo) => (
+        {data.todos.map((todo: Todo) => (
           <Row>
             <Col span={18}>
               <Input

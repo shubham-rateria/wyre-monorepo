@@ -74,6 +74,8 @@ function remove(object: typeof ObservableObject, operation: TPatch) {
 function replace(object: typeof ObservableObject, operation: TPatch) {
   const pointer = evaluate(object, operation.path);
 
+  console.log("[patch:replace]", object, operation);
+
   // @ts-ignore
   const timestamp = new Timestamp(operation.actorId, operation.seq);
   // @ts-ignore
@@ -95,6 +97,8 @@ export function apply(
   const { parent, value, key } = evaluate(object, operation.path);
   const patch: TPatch = operation;
   patch.path = `/${key}`;
+
+  console.log("[apply:object]", patch, parent, value, key);
 
   if (parent instanceof ObservableObject) {
     switch (patch.op) {
