@@ -142,7 +142,7 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
        */
       if (key in _object) {
         const rawValue: TValue = _object[key];
-        if (rawValue.timestamp.lessThan(timestamp)) {
+        if (rawValue.timestamp.lessThan(timestamp) && !rawValue.tombstone) {
           _object[key] = item;
         }
       } else {
