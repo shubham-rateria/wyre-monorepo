@@ -244,10 +244,19 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
 
     console.log("[deletefrompatch]", value, key, timestamp);
 
+    /**
+     * We check if my timestamp is lower than yours,
+     * then I will update my timestamp to match yours.
+     * This will ensure that if multiple users delete
+     * a value at the same time, the timestamps will
+     * still be in sync
+     */
+
     if (value.timestamp.lessThan(timestamp)) {
-      _object[key].tombstone = true;
-      _object[key].timestamp = timestamp;
+      value.timestamp = timestamp;
     }
+
+    _object[key].tombstone = true;
   }
 
   Object.defineProperty(_self, "deleteKeyFromPatch", {
