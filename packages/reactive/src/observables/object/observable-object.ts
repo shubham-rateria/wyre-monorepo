@@ -197,7 +197,7 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
 
     if (key in _object) {
       const objectValue = _object[key];
-      if (objectValue.timestamp.lessThan(timestamp)) {
+      if (objectValue.timestamp.lessThan(timestamp) && !objectValue.tombstone) {
         _object[key].timestamp = timestamp;
         _object[key].value = transformedValue;
         _object[key].tombstone = false;
@@ -283,6 +283,7 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
         return !_object[key]?.tombstone ? _object[key].value : undefined;
       },
       set: function (v) {
+        console.log("[object:set]", key, v);
         setKeyValueBySelf(key, v);
       },
     });
@@ -343,6 +344,38 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
     value: function () {
       // TODO: ignore dead values
       return Object.keys(_object);
+    },
+  });
+
+  function insertNewKey(key: string, value: any) {
+    if (key in _object) {
+      throw new Error("Key already exists.");
+    }
+
+    const transformedValue = getValueToSet(key, value);
+    const timestamp = new Timestamp(_actorId);
+    const rawValue: TValue = {
+      isPrimitive: isPrimitiveType(value) || false,
+      timestamp: timestamp,
+      tombstone: false,
+      value: transformedValue,
+    };
+    _object[key] = rawValue;
+    defineKeyProperty(key);
+    raiseEvent({
+      type: "itemadded",
+      path: "/" + key,
+      value: value,
+      timestamp: timestamp.timestamp,
+    });
+  }
+
+  Object.defineProperty(_self, "insert", {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function (key: string, value: any) {
+      return insertNewKey(key, value);
     },
   });
 
