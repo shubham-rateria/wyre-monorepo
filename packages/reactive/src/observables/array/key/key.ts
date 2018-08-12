@@ -1,3 +1,4 @@
+export const KEY_DELTA = 10;
 export class Key {
   /**
    * A key is represented in string as {actorId}/{fractionalId}
@@ -66,6 +67,12 @@ export class Key {
 
     const fractionalId = (start + end) / 2;
 
+    return new Key(fractionalId.toString());
+  }
+
+  static generateNextFromString(key: string) {
+    const start = Key.fromString(key).fractionalId;
+    const fractionalId = start + KEY_DELTA;
     return new Key(fractionalId.toString());
   }
 
