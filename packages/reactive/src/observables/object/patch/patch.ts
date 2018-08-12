@@ -74,8 +74,15 @@ function add(object: any, operation: TPatch) {
 }
 
 function remove(object: typeof ObservableObject, operation: TPatch) {
+  console.log("[patch:delete]");
+
   const timestamp = new Timestamp(operation.actorId, operation.seq);
+
+  console.log("[patch:delete:timestamp]", timestamp);
+
   const pointer = evaluate(object, operation.path);
+
+  console.log("[patch:delete:pointer]", pointer);
 
   // @ts-ignore
   object.deleteKeyFromPatch(pointer.key, timestamp);
@@ -109,14 +116,24 @@ export function apply(
   const patch: TPatch = operation;
   patch.path = `/${key}`;
 
-  console.log("[apply:object]", patch, parent, value, key);
+  console.log(
+    "[apply:object]",
+    patch,
+    parent,
+    value,
+    key,
+    typeof parent,
+    parent instanceof ObservableObject
+  );
 
   if (parent instanceof ObservableObject) {
+    console.log("[patch:object]: parent is object");
     switch (patch.op) {
       case "add":
         // @ts-ignore
         return add(parent, patch);
       case "remove":
+        console.log("[patch:object]: parent is object: removing");
         // @ts-ignore
         return remove(parent, patch);
       case "replace":
