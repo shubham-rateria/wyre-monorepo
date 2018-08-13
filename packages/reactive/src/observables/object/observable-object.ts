@@ -374,6 +374,15 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
     },
   });
 
+  Object.defineProperty(_self, "rawKeys", {
+    enumerable: false,
+    writable: false,
+    configurable: false,
+    value: function () {
+      return Object.keys(_object);
+    },
+  });
+
   function insertNewKey(key: string, value: any) {
     if (key in _object) {
       throw new Error("Key already exists.");

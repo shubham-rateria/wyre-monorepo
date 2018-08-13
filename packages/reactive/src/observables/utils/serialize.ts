@@ -24,7 +24,7 @@ export function serializeArray(arr: typeof ObservableArray) {
   const serializedValue: ArraySerializedValue[] = [];
   let value: any;
   // @ts-ignore
-  for (let i = 0; i < arr.length; i++) {
+  for (let i = 0; i < arr.rawLength; i++) {
     // @ts-ignore
     const arrRawValue: ArraySerializedValue = arr.getRawValue(i);
     if (arrRawValue.value instanceof ObservableObject) {
@@ -52,7 +52,7 @@ export function serializeObject(object: typeof ObservableObject) {
    * add as value for key, else get raw representation
    */
   // @ts-ignore
-  object.keys().forEach((key: string) => {
+  object.rawKeys().forEach((key: string) => {
     console.log("[serialize:object]:serializing key", key);
     // @ts-ignore
     const rawValue: ObjectSerializedValue = object.getRawValue(key);
