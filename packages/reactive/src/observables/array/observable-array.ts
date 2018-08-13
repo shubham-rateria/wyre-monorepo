@@ -141,6 +141,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
   }
 
   function setRawValues(values: ArraySerializedValue[]) {
+    console.log("[setrawvalues:array]", values);
     for (let i = 0; i < values.length; i++) {
       const item = values[i];
       const key = new Key(item.key.fractionalId.toString());
@@ -148,6 +149,8 @@ export default function ObservableArray(items, onChange, actorId = "") {
         item.timestamp.timestamp.actorId,
         item.timestamp.timestamp.seq
       );
+      let valueToSet: any;
+      console.log("[setrawvalues:array:item]", item, key, timestamp);
       if (
         typeof item.value === "object" &&
         !Array.isArray(item.value) &&
@@ -159,14 +162,16 @@ export default function ObservableArray(items, onChange, actorId = "") {
           handleNonPrimitiveChildChange(key.toString())
         );
         newItem.setRawValues(item.value);
-        item.value = newItem;
+        valueToSet = newItem;
       } else if (Array.isArray(item.value)) {
         const newItem = new ObservableArray(
           [],
           handleNonPrimitiveChildChange(key.toString())
         );
         newItem.setRawValues(item.value);
-        item.value = newItem;
+        valueToSet = newItem;
+      } else {
+        valueToSet = item.value;
       }
 
       /**
@@ -174,16 +179,19 @@ export default function ObservableArray(items, onChange, actorId = "") {
        * and apply change
        */
       const arrayIndex = crdtIndexToArrayIndex(key.toString());
+      console.log("[setrawvalues:array:arrayIndex]", arrayIndex);
       if (arrayIndex !== -1) {
         const arrayValue: ArrayValue = _array[arrayIndex];
         if (arrayValue.timestamp.lessThan(timestamp) && !arrayValue.tombstone) {
+          console.log("[setrawvalues:array:existing ts]", arrayValue);
           arrayValue.timestamp = timestamp;
-          arrayValue.value = item.value;
+          arrayValue.value = valueToSet;
         }
       } else {
+        console.log("[setrawvalues:array:new]", item);
         item.timestamp = timestamp;
         item.key = key;
-        _array.push(item);
+        _array.push({ ...item, key, timestamp, value: valueToSet });
         defineIndexProperty(i);
         defineIndexProperty(key.toString());
       }

@@ -104,16 +104,21 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
     [key: string]: ObjectSerializedValue | ArraySerializedValue;
   }) {
     const serializedObject = cloneDeep(obj);
+    console.log("[setrawvalues:object]", serializedObject);
     /**
      * Iterate over the keys and check values
      */
     Object.keys(serializedObject).forEach((key: string) => {
       const item = serializedObject[key];
+      let valueToSet: any;
+      let timestampToSet: Timestamp;
       const timestamp = new Timestamp(
         item.timestamp.timestamp.actorId,
         item.timestamp.timestamp.seq
       );
-      item.timestamp = timestamp;
+      timestampToSet = timestamp;
+      console.log("[setrawvalues:object:1]", item, timestamp);
+
       if (Array.isArray(item.value)) {
         const arr = new ObservableArray(
           [],
@@ -121,7 +126,8 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
           _actorId
         );
         arr.setRawValues(item.value);
-        item.value = arr;
+        valueToSet = arr;
+        console.log("[setrawvalues:object:setting array value]", arr);
       } else if (
         typeof item.value === "object" &&
         !Array.isArray(item.value) &&
@@ -134,7 +140,10 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
           _actorId
         );
         obj.setRawValues(item.value);
-        item.value = obj;
+        valueToSet = obj;
+        console.log("[setrawvalues:object:setting object value]", obj);
+      } else {
+        valueToSet = item.value;
       }
 
       /**
@@ -142,12 +151,30 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
        * and apply change
        */
       if (key in _object) {
+        console.log("[setrawvalues:object:key in object]", key, _object);
+
         const rawValue: TValue = _object[key];
+        console.log(
+          "[setrawvalues:object:checking ts]",
+          rawValue.timestamp,
+          timestamp
+        );
+
         if (rawValue.timestamp.lessThan(timestamp) && !rawValue.tombstone) {
-          _object[key] = item;
+          console.log("[setrawvalues:object:< ts]", item);
+          _object[key] = {
+            ...item,
+            timestamp: timestamp,
+            value: valueToSet,
+          };
         }
       } else {
-        _object[key] = item;
+        console.log("[setrawvalues:object:key not in object]", item, key);
+        _object[key] = {
+          ...item,
+          timestamp: timestampToSet,
+          value: valueToSet,
+        };
         defineKeyProperty(key);
       }
     });
@@ -478,7 +505,15 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
       | typeof ObservableObject = getValueToSet(key, object[key]);
     _object[key] = {
       isPrimitive: isPrimitiveType(object[key]) || false,
-      timestamp: new Timestamp(_actorId),
+      /**
+       * initial timestamps never specify the
+       * actorid, since
+       * 1. I have not made any changes to this, this
+       * object has been given to me
+       * 2. Everyone must start on the same timestamp when
+       * initial data is given
+       */
+      timestamp: new Timestamp(),
       tombstone: false,
       value: transformedValue,
     };
