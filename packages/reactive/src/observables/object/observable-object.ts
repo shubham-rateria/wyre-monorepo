@@ -10,6 +10,7 @@ import {
   ArraySerializedValue,
   ObjectSerializedValue,
 } from "../utils/serialize";
+import { objectToJSON } from "../utils/toJSON";
 import { apply } from "./patch/patch";
 
 type TSimpleValue = number | string | null | undefined | object;
@@ -412,6 +413,15 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
     writable: false,
     value: function (key: string, value: any) {
       return insertNewKey(key, value);
+    },
+  });
+
+  Object.defineProperty(_self, "toJSON", {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function () {
+      return objectToJSON(_self);
     },
   });
 
