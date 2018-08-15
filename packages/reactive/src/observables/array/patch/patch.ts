@@ -103,7 +103,7 @@ export function evaluate(object: any, path: string): PointerEvaluation {
     // not sure if this the best way to handle non-existant paths...
     value = (parent || {})[key];
 
-    console.log("[eval]", typeof parent, parent, typeof value, value);
+    // console.log("[eval]", typeof parent, parent, typeof value, value);
   }
 
   return { parent, key, value };
@@ -112,7 +112,7 @@ export function evaluate(object: any, path: string): PointerEvaluation {
 function add(object: typeof ObservableArray, operation: TPatch) {
   const pointer = evaluate(object, operation.path);
 
-  console.log("[patch:add]", object);
+  // console.log("[patch:add]", object);
 
   // @ts-ignore
   const timestamp = new Timestamp(operation.actorId, operation.seq);
@@ -127,7 +127,7 @@ function add(object: typeof ObservableArray, operation: TPatch) {
 function remove(object: typeof ObservableArray, operation: TPatch) {
   const pointer = evaluate(object, operation.path);
 
-  console.log("[patch:deleting]", pointer, object, operation);
+  // console.log("[patch:deleting]", pointer, object, operation);
 
   // @ts-ignore
   const timestamp = new Timestamp(operation.actorId, operation.seq);
@@ -142,7 +142,7 @@ function remove(object: typeof ObservableArray, operation: TPatch) {
 function replace(object: typeof ObservableArray, operation: TPatch) {
   const pointer = evaluate(object, operation.path);
 
-  console.log("[patch:replacing]", pointer, object, operation);
+  // console.log("[patch:replacing]", pointer, object, operation);
 
   // @ts-ignore
   const timestamp = new Timestamp(operation.actorId, operation.seq);
@@ -162,7 +162,7 @@ export function apply(
   const patch: TPatch = operation;
   patch.path = `/${key}`;
 
-  console.log("[apply]", typeof parent, patch);
+  // console.log("[apply]", typeof parent, patch);
 
   if (parent instanceof ObservableArray) {
     switch (patch.op) {
