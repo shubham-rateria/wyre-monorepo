@@ -13,6 +13,10 @@ interface RegisterParams {
   onChange: (patch: TPatch) => void;
 }
 
+interface DestroyParams {
+  refid: string;
+}
+
 export interface ObjectData {
   data: typeof ObservableObject;
   state: State;
@@ -88,6 +92,14 @@ export class _SyncManager {
   async setupSyncRequestReceiver(roomName: string) {
     this._io.on("sync:request:" + roomName, (socketId: string) => {
       console.log("[sync:request] received", roomName);
+      if (!(this.objects[roomName].state === "ONLINE")) {
+        console.log(
+          "[sync:request]:no-sync",
+          roomName,
+          this.objects[roomName].state
+        );
+        this._io.emit("sync:no-sync", roomName, socketId);
+      }
       const data = serializeObject(this.objects[roomName].data);
       this._io.emit("sync:response:" + roomName, data, socketId);
       console.log("[sync:request] sent", data, "sync:response:" + roomName);
@@ -107,8 +119,15 @@ export class _SyncManager {
     });
   }
 
-  async signalOnline(roomName: string) {
-    this._io.emit("online", roomName);
+  async signalReadyForRoom(roomName: string) {
+    this._io.emit("ready:room", roomName);
+  }
+
+  async destroy(params: DestroyParams) {
+    if (params.refid in this.objects) {
+      delete this.objects[params.refid];
+    }
+    this._io.emit("destroy", params.refid);
   }
 
   async create(params: RegisterParams): Promise<typeof ObservableObject> {
@@ -155,7 +174,7 @@ export class _SyncManager {
     await this.setupPatchListener(_data, params.onChange, params.refid);
     await this.setupSyncRequestReceiver(params.refid);
     this.objects[params.refid].state = "ONLINE";
-    await this.signalOnline(params.refid);
+    await this.signalReadyForRoom(params.refid);
     return _data;
   }
 
