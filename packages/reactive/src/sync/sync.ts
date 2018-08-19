@@ -11,6 +11,7 @@ interface RegisterParams {
   refid: string;
   data: any;
   onChange: (patch: TPatch) => void;
+  onSet: () => void;
 }
 
 interface DestroyParams {
@@ -145,13 +146,15 @@ export class _SyncManager {
       _data = new ObservableArray(
         params.data,
         this.getPatchSendHandler(params.refid, params.collectionName),
-        this.socketId
+        this.socketId,
+        params.onSet
       );
     } else if (typeof params.data === "object" && params.data !== null) {
       _data = new ObservableObject(
         params.data,
         this.getPatchSendHandler(params.refid, params.collectionName),
-        this.socketId
+        this.socketId,
+        params.onSet
       );
     } else {
       throw new Error(`We do not support ${typeof params.data} yet.`);
