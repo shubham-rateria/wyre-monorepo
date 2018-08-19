@@ -1,6 +1,5 @@
+import { Button, Col, Input, Row, Switch } from "antd";
 import React from "react";
-import { SyncManager } from "@sam98231/reactive";
-import { Button, Radio, Switch, Input, Col, Row } from "antd";
 import { useSync } from "../hooks/useSync";
 
 const initialTodos = [];
@@ -22,7 +21,7 @@ export const Todo: React.FC = () => {
   const [init, data] = useSync({
     data: { todos: [] },
     collectionName: "Todo",
-    id: "id-1",
+    id: "id11",
   });
 
   const load = async () => {

@@ -9,11 +9,17 @@ interface UseSyncParams {
 
 export const useSync = (params: UseSyncParams) => {
   const [value, setValue] = useState(0);
+  const [changeValue, setChangeValue] = useState(0);
   const [data, setData] = useState(params.data);
 
   const onChange = (patch: any) => {
     console.log("[onChange]");
     setValue((value) => value + 1);
+  };
+
+  const onSet = () => {
+    console.log("[onChange]");
+    setChangeValue((value) => value + 1);
   };
 
   const init = async () => {
@@ -22,9 +28,9 @@ export const useSync = (params: UseSyncParams) => {
       data: params.data,
       collectionName: params.collectionName,
       refid: params.id,
-      onChange: onChange,
+      onChange,
+      onSet,
     });
-    console.log("[useSync:loaded]", onChange);
     // onChange();
     setData(loadedData);
   };
