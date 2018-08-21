@@ -33,7 +33,7 @@ type State =
   | "OFFLINE";
 
 export class _SyncManager {
-  socketEndpoint = "http://localhost:3002";
+  socketEndpoint = "http://api.wyre.live:3002";
   socketConfig = { path: "/socket.io" };
   _io = io(this.socketEndpoint, this.socketConfig);
   socketId: string = "";
