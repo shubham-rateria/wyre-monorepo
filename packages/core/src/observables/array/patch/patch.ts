@@ -1,4 +1,4 @@
-import { Timestamp } from "./../../../lamport/index";
+import { Timestamp } from "../../../lamport/index";
 import { TPatch } from "../../../types/patch.type";
 import ObservableArray from "../observable-array";
 import { Key } from "../key/key";

@@ -31,7 +31,6 @@ export const useSync = (params: UseSyncParams) => {
       onChange,
       onSet,
     });
-    // onChange();
     setData(loadedData);
   };
 

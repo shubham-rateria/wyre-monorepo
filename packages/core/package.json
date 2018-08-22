@@ -1,6 +1,6 @@
 {
-  "name": "@sam98231/reactive",
-  "version": "0.3.0",
+  "name": "@wyre-client/core",
+  "version": "0.2.2",
   "description": "",
   "private": false,
   "source": "src/index.ts",

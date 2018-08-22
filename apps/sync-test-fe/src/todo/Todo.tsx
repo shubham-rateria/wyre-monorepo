@@ -1,6 +1,7 @@
 import { Button, Col, Input, Row, Switch } from "antd";
 import React from "react";
 import { useSync } from "../hooks/useSync";
+import "./Todo.css";
 
 const initialTodos = [];
 const MY_NAME = "Shubham Rateria";
@@ -15,13 +16,20 @@ type Todo = {
   done: boolean;
 };
 
+const TICKED_STYLE = {
+  background: "#99d98c50",
+  color: "#52b69a",
+  fontWeight: "bolder",
+};
+
 export const Todo: React.FC = () => {
   const forceUpdate = useForceUpdate();
   const [loaded, setLoaded] = React.useState(false);
+
   const [init, data] = useSync({
     data: { todos: [] },
     collectionName: "Todo",
-    id: "id11",
+    id: "id13",
   });
 
   const load = async () => {
@@ -39,17 +47,18 @@ export const Todo: React.FC = () => {
       text: (data.todos.length + 1).toString(),
       done: false,
     });
-    // forceUpdate();
   };
 
   const handleTodoDoneChange = (todo: Todo, value: boolean) => {
     todo.done = value;
-    // forceUpdate();
+  };
+
+  const toggleTodo = (todo: Todo) => {
+    todo.done = !todo.done;
   };
 
   const handleTodoTextChange = (todo: Todo, value: string) => {
     todo.text = value;
-    // forceUpdate();
   };
 
   const handleTodoDelete = (todo: Todo) => {
@@ -65,54 +74,54 @@ export const Todo: React.FC = () => {
     return <div>Loading...</div>;
   }
 
-  console.log(
-    "[todos]",
-    data?.todos?.map((val: any) => val)
-  );
-
   return (
-    <div>
-      <div>
-        <Button onClick={forceUpdate}>Force Update</Button>
+    <div className="container">
+      <h1>My Todos</h1>
+      <div className="actions">
+        {/* <div>
+          <Button onClick={forceUpdate}>Force Update</Button>
+        </div> */}
+        <div>
+          <Button onClick={addNewTodo}>Add New Todo</Button>
+        </div>
       </div>
-      <div>
-        <Button onClick={addNewTodo}>Add New Todo</Button>
-      </div>
-      <div>
-        <Row>
-          <Col span={12}>
-            {data?.todos.map((todo: Todo, index: number) => (
-              <Row>
-                <Col span={18}>
-                  <Input
-                    value={todo.text}
-                    placeholder="Enter Todo"
-                    onChange={(event) => {
-                      handleTodoTextChange(todo, event.target.value);
-                    }}
-                  />
-                </Col>
-                <Col span={3}>
-                  <Switch
-                    checked={todo.done}
-                    onChange={(checked: boolean) => {
-                      handleTodoDoneChange(todo, checked);
-                    }}
-                  />
-                  <Col span={3}>
-                    <Button
-                      onClick={() => {
-                        handleTodoDelete(todo);
-                      }}
-                    >
-                      D
-                    </Button>
-                  </Col>
-                </Col>
-              </Row>
-            ))}
-          </Col>
-        </Row>
+      <div className="todo-list-container">
+        {data?.todos.map((todo: Todo, index: number) => (
+          <Row className="todo-item">
+            <Col span={17}>
+              <Input
+                value={todo.text}
+                placeholder="Enter Todo"
+                onChange={(event) => {
+                  handleTodoTextChange(todo, event.target.value);
+                }}
+              />
+            </Col>
+            <Col span={2}>
+              <Button
+                style={todo.done ? TICKED_STYLE : {}}
+                shape="circle"
+                ghost
+                type="text"
+                onClick={() => toggleTodo(todo)}
+              >
+                ✓
+              </Button>
+            </Col>
+            <Col span={3}>
+              <Button
+                onClick={() => {
+                  handleTodoDelete(todo);
+                }}
+                shape="circle"
+                danger
+                type="text"
+              >
+                🗑
+              </Button>
+            </Col>
+          </Row>
+        ))}
       </div>
     </div>
   );
