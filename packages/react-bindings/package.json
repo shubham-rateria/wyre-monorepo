@@ -1,6 +1,6 @@
 {
   "name": "@wyre-client/react",
-  "version": "1.0.0",
+  "version": "0.2.1",
   "description": "React bindings for the wyre library.",
   "private": false,
   "main": "index.js",
@@ -10,7 +10,7 @@
   "author": "Rateria",
   "license": "ISC",
   "dependencies": {
-    "react": "17.0.2",
-    "@wyre-client/core": "workspace:*"
+    "@wyre-client/core": "workspace:*",
+    "react": "17.0.2"
   }
 }
