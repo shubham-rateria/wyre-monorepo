@@ -17,11 +17,6 @@ export const useSync = (params: UseSyncParams) => {
     setValue((value) => value + 1);
   };
 
-  const onSet = () => {
-    console.log("[onChange]");
-    setChangeValue((value) => value + 1);
-  };
-
   const init = async () => {
     console.log("[useSync:init]");
     const loadedData = await SyncManager.create({
@@ -29,7 +24,6 @@ export const useSync = (params: UseSyncParams) => {
       collectionName: params.collectionName,
       refid: params.id,
       onChange,
-      onSet,
     });
     // onChange();
     setData(loadedData);
