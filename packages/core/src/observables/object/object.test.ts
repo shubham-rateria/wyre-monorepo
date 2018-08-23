@@ -11,13 +11,25 @@ const actors = ["a", "b", "c", "d"];
 describe("testing observable objects", () => {
   test("obj:initialize", () => {
     const obj = { arr: [1, 2], text: "some value", counter: 0 };
-    const obs = new ObservableObject(obj, (patch: any) => {});
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     expect(obj.text).toBe("some value");
     expect(obj.counter).toBe(0);
   });
   test("obj:set values", () => {
     const obj = { arr: [1, 2], text: "some value", counter: 0 };
-    const obs = new ObservableObject(obj, (patch: any) => {});
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     for (let i = 0; i < 5; i++) {
       obs.counter = obs.counter + 1;
     }
@@ -30,19 +42,37 @@ describe("testing observable objects", () => {
   test("obj:onChange", () => {});
   test("obj:timestamp is set", () => {
     const obj = { arr: [1, 2], text: "some value", counter: 0 };
-    const obs = new ObservableObject(obj, (patch: any) => {});
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const rawValue = obs.getRawValue("counter");
     expect(rawValue.timestamp.timestamp.seq).toBe(1);
   });
   test("obj:actorId is set", () => {
     const obj = { arr: [1, 2], text: "some value", counter: 0 };
-    const obs = new ObservableObject(obj, (patch: any) => {});
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const rawValue = obs.getRawValue("counter");
     expect(rawValue.timestamp.timestamp.seq).toBe(1);
   });
   test("obj:timestamp updates on change", () => {
     const obj = { arr: [1, 2], text: "some value", counter: 0 };
-    const obs = new ObservableObject(obj, (patch: any) => {}, actors[0]);
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: actors[0],
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     for (let i = 0; i < 5; i++) {
       obs.counter = obs.counter + 1;
       const rawValue = obs.getRawValue("counter");
@@ -52,7 +82,13 @@ describe("testing observable objects", () => {
   });
   test("obj:delete should tombstone value", () => {
     const obj = { arr: [1, 2], text: "some value", counter: 0 };
-    const obs = new ObservableObject(obj, (patch: any) => {}, actors[0]);
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: actors[0],
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obs.delete("text");
     const rawValue = obs.getRawValue("text");
     expect(rawValue.tombstone).toBe(true);
@@ -62,17 +98,24 @@ describe("testing observable objects", () => {
   test("obj:child:arr patch should work", async () => {
     const obj = { obj: { key: [1, 2, { key: "val" }] } };
     const patches: TPatch[] = [];
-    const obs = new ObservableObject(
-      obj,
-      (patch: any) => {
-        console.log("[nested child]", patch);
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: actors[1],
+      collectionName: "",
+      emitPatch: (patch) => {
         patches.push(patch);
       },
-      actors[1]
-    );
+    });
     obs.obj.key[2].key = "val1";
     await sleep(100);
-    const obs1 = new ObservableObject(obj, () => {}, actors[0]);
+    const obs1 = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: actors[0],
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obs1.applyPatch(patches[0]);
     expect(obs1.obj.key[2].key).toBe("val1");
   });
@@ -81,17 +124,24 @@ describe("testing observable objects", () => {
   test("obj:child:object patch should work", async () => {
     const obj = { obj: { key: "val" } };
     const patches: TPatch[] = [];
-    const obs = new ObservableObject(
-      obj,
-      (patch: any) => {
-        console.log("[nested child]", patch);
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: actors[1],
+      collectionName: "",
+      emitPatch: (patch) => {
         patches.push(patch);
       },
-      actors[1]
-    );
+    });
     obs.obj.key = "val1";
     await sleep(100);
-    const obs1 = new ObservableObject(obj, () => {}, actors[0]);
+    const obs1 = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: actors[0],
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obs1.applyPatch(patches[0]);
     expect(obs1.obj.key).toBe("val1");
   });
@@ -104,7 +154,13 @@ describe("testing observable objects", () => {
       value: "newValue",
     };
     const obj = { arr: [1, 2], text: "some value", counter: 0 };
-    const obs = new ObservableObject(obj, (patch: any) => {}, actors[1]);
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: actors[1],
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obs.applyPatch(patch);
     expect(obs.newKey).toBe(patch.value);
   });
@@ -125,15 +181,27 @@ describe("testing observable objects", () => {
       path: "/key",
     };
     const obj = { key: "value" };
-    const obs = new ObservableObject(obj, () => {});
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obs.applyPatch(patch);
     expect(obs.key).toBeUndefined();
   });
   test("patch:delete:generate", () => {
     const patches: TPatch[] = [];
     const obj = { key: "value" };
-    const obs1 = new ObservableObject(obj, (patch: TPatch) => {
-      patches.push(patch);
+    const obs1 = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches.push(patch);
+      },
     });
     obs1.delete("key");
     expect(patches.length).toBe(1);
@@ -144,7 +212,13 @@ describe("testing observable objects", () => {
 describe("nested patches", () => {
   test("nested:1:array:change", () => {
     const obj = { key: [1, 2, 3] };
-    const obs = new ObservableObject(obj, () => {});
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const patch: TPatch = {
       op: "replace",
       path: "/key/$0",
@@ -157,7 +231,13 @@ describe("nested patches", () => {
   });
   test("nested:2:array:change", () => {
     const obj = { key: [{ key: [1, 2, 3] }] };
-    const obs = new ObservableObject(obj, () => {});
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const patch: TPatch = {
       op: "replace",
       path: "/key/$0/key/$0",
@@ -170,7 +250,13 @@ describe("nested patches", () => {
   });
   test("nested:1:object:change", () => {
     const obj = { key: { key: "value" } };
-    const obs = new ObservableObject(obj, () => {});
+    const obs = new ObservableObject({
+      object: obj,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const patch: TPatch = {
       op: "replace",
       path: "/key/key",
@@ -183,8 +269,14 @@ describe("nested patches", () => {
   });
   test("object:key:insert", () => {
     const patches: any[] = [];
-    const obs = new ObservableObject({}, (patch: any) => {
-      patches.push(patch);
+    const obs = new ObservableObject({
+      object: {},
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches.push(patch);
+      },
     });
     obs.insert("key", [1, 2, 3]);
     expect(obs.key.length).toBe(3);
@@ -196,11 +288,23 @@ describe("nested patches", () => {
   });
   test("object:key:insert:patch", () => {
     const patches: any[] = [];
-    const obs = new ObservableObject({}, (patch: any) => {
-      patches.push(patch);
+    const obs = new ObservableObject({
+      object: {},
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches.push(patch);
+      },
     });
     obs.insert("key", [1, 2, 3]);
-    const obs1 = new ObservableObject({}, () => {});
+    const obs1 = new ObservableObject({
+      object: {},
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obs1.applyPatch(patches[0]);
     expect(obs1.key.length).toBe(3);
     expect(obs1.key).toBeInstanceOf(ObservableArray);
@@ -210,7 +314,13 @@ describe("nested patches", () => {
 describe("testing situations", () => {
   test("two people change the same object: 1", () => {
     const d = { key: "val" };
-    const obs = new ObservableObject(d, () => {}, actors[1]);
+    const obs = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: actors[1],
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
 
     /**
      * I make the change
@@ -239,7 +349,13 @@ describe("testing situations", () => {
   });
   test("two people change the same object: 2", () => {
     const d = { key: "val" };
-    const obs = new ObservableObject(d, () => {}, actors[0]);
+    const obs = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: actors[0],
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
 
     /**
      * I make the change
@@ -285,14 +401,26 @@ describe("situation tests", () => {
       formField2: "",
     };
     const patches1: any[] = [];
-    const obj1 = new ObservableObject(d, (patch) => {
-      patches1.push(patch);
+    const obj1 = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches1.push(patch);
+      },
     });
     for (let i = 0; i < 5; i++) {
       obj1.inputNumber++;
     }
     expect(patches1.length).toBe(5);
-    const obj2 = new ObservableObject(d, () => {});
+    const obj2 = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     for (let i = 0; i < patches1.length; i++) {
       obj2.applyPatch(patches1[i]);
     }
@@ -307,8 +435,14 @@ describe("situation tests", () => {
       timelineItems: [0, 1],
     };
     const patches1: any[] = [];
-    const obj1 = new ObservableObject(d, (patch) => {
-      patches1.push(patch);
+    const obj1 = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches1.push(patch);
+      },
     });
     const samplePatch: TPatch = {
       op: "replace",
@@ -327,8 +461,14 @@ describe("situation tests", () => {
       timelineItems: [0, 1],
     };
     const patches1: any[] = [];
-    const obj1 = new ObservableObject(d, (patch) => {
-      patches1.push(patch);
+    const obj1 = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches1.push(patch);
+      },
     });
     console.log(cloneDeep(obj1));
   });
