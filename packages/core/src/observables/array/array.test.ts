@@ -10,30 +10,61 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 describe("tests for array", () => {
   test("create an array", async () => {
     const items = [1, 2, 3];
-    const arr = new ObservableArray(items, () => {});
+    const arr = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     expect(arr.length).toBe(items.length);
   });
   test("basic set", () => {
-    const arr = new ObservableArray([1, 2, 3], () => {});
+    const items = [1, 2, 3];
+    const arr = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     arr[0] = 10;
     expect(arr[0]).toBe(10);
   }),
     test("array:push:new", async () => {
-      const arr = new ObservableArray([], () => {});
+      const arr = new ObservableArray({
+        items: [],
+        onChange: () => {},
+        actorId: "",
+        collectionName: "",
+        emitPatch: (patch) => {},
+      });
       arr.push(10);
       expect(arr[0]).toBe(10);
       expect(arr.length).toBe(1);
     });
   test("array:push:existing", async () => {
     const items = [1, 2, 3];
-    const arr = new ObservableArray(items, () => {});
+    const arr = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     arr.push(10);
     expect(arr[3]).toBe(10);
     expect(arr.length).toBe(items.length + 1);
   });
   test("array:push:multiple", async () => {
     const items = [1, 2, 3];
-    const arr = new ObservableArray(items, () => {});
+    const arr = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const toAdd = 5;
     for (let i = 0; i < toAdd; i++) {
       arr.push(i);
@@ -43,7 +74,13 @@ describe("tests for array", () => {
   });
   test("array:map", () => {
     const items = [1, 2, 3];
-    const arr = new ObservableArray(items, () => {});
+    const arr = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     let counter = 0;
     arr.map((val) => {
       console.log("map", val);
@@ -53,7 +90,13 @@ describe("tests for array", () => {
   }),
     test("array:push:weirdbug", () => {
       const pushitems = [1, 2, 3, 4];
-      const arr = new ObservableArray([], () => {});
+      const arr = new ObservableArray({
+        items: [],
+        onChange: () => {},
+        actorId: "",
+        collectionName: "",
+        emitPatch: (patch) => {},
+      });
       let counter = 0;
       for (let i = 0; i < pushitems.length; i++) {
         arr.push(pushitems[i]);
@@ -63,7 +106,13 @@ describe("tests for array", () => {
       }
     }),
     test("array:push:howmuch", () => {
-      const arr = new ObservableArray([], () => {});
+      const arr = new ObservableArray({
+        items: [],
+        onChange: () => {},
+        actorId: "",
+        collectionName: "",
+        emitPatch: (patch) => {},
+      });
       for (let i = 0; i < 40; i++) {
         arr.push(i);
       }
@@ -73,12 +122,24 @@ describe("tests for array", () => {
         [1, 2, 3],
         [4, 5, 6],
       ];
-      const arr = new ObservableArray(items, () => {});
+      const arr = new ObservableArray({
+        items,
+        onChange: () => {},
+        actorId: "",
+        collectionName: "",
+        emitPatch: (patch) => {},
+      });
       expect(arr[0]).toBeInstanceOf(ObservableArray);
     });
   test("child:object", () => {
     const items = [{ d: 1 }];
-    const arr = new ObservableArray(items, () => {});
+    const arr = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     expect(arr[0]).toBeInstanceOf(ObservableObject);
   });
   test("patch:replace", () => {
@@ -90,21 +151,28 @@ describe("tests for array", () => {
       actorId: "a",
     };
     const items = [1, 2, 3];
-    const arr = new ObservableArray(items, console.log, "b");
+    const arr = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     arr.applyPatch(patch);
     expect(arr[0]).toBe(10);
   }),
     test("patch:path for push", async () => {
       const items = [1, 2, 3];
       const patches: TPatch[] = [];
-      const obs1 = new ObservableArray(
+      const obs1 = new ObservableArray({
         items,
-        (patch) => {
+        onChange: () => {},
+        actorId: "a",
+        collectionName: "",
+        emitPatch: (patch) => {
           patches.push(patch);
-          console.log("[patch:new]", patch);
         },
-        "a"
-      );
+      });
       obs1.push(10);
       await sleep(200);
       expect(patches.length).toBe(1);
@@ -114,7 +182,13 @@ describe("tests for array", () => {
     }),
     test("array: both crdt and normal index works", async () => {
       const items = [1, 2, 3];
-      const obs1 = new ObservableArray(items, (patch) => {});
+      const obs1 = new ObservableArray({
+        items,
+        onChange: () => {},
+        actorId: "",
+        collectionName: "",
+        emitPatch: (patch) => {},
+      });
       expect(obs1["$0"]).toBe(1);
       expect(obs1[0]).toBe(1);
     });
@@ -122,8 +196,14 @@ describe("tests for array", () => {
   test("arr:delete", () => {
     const items = [1, 2, 3];
     const patches: any[] = [];
-    const obs1 = new ObservableArray(items, (patch) => {
-      patches.push(patch);
+    const obs1 = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches.push(patch);
+      },
     });
     obs1.delete(0);
     const rawValue = obs1.getRawValue(0);
@@ -143,7 +223,13 @@ describe("tests for array", () => {
     const d = {
       todos: items,
     };
-    const obj = new ObservableObject(d, () => {});
+    const obj = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obj.todos.delete(1);
     const values = obj.todos.map((val) => val.id);
     console.log("[values]", values);
@@ -161,8 +247,12 @@ describe("tests for array", () => {
     const d = {
       todos: items,
     };
-    const obj = new ObservableObject(d, (patch) => {
-      console.log("[arr:delete:multiple:patch]", patch);
+    const obj = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
     });
     const NUM_VALUES_TO_DELETE = 3;
     for (let i = 0; i < NUM_VALUES_TO_DELETE; i++) {
@@ -182,8 +272,14 @@ describe("tests for array", () => {
       path: "/$0",
     };
     const patches: any[] = [];
-    const arr = new ObservableArray(items, (patch) => {
-      patches.push(patch);
+    const arr = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches.push(patch);
+      },
     });
     arr.applyPatch(patch);
     // const rawValue: ArrayValue = arr.getRawValue(0);
@@ -201,8 +297,14 @@ describe("tests for array", () => {
      */
     const items = [1, 2, 3];
     const patches1: any[] = [];
-    const client1 = new ObservableArray(items, (patch) => {
-      patches1.push(patch);
+    const client1 = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches1.push(patch);
+      },
     });
     client1.delete(0);
     expect(patches1.length).toBe(1);
@@ -225,12 +327,24 @@ describe("tests for array", () => {
       path: "/todos/$0/done",
       value: true,
     };
-    const obs = new ObservableObject(data, () => {});
+    const obs = new ObservableObject({
+      object: data,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obs.applyPatch(patch);
     expect(obs.todos[0].done).toBe(true);
   });
   test("arr:findindextoinsert", () => {
-    const arr = new ObservableArray([1, 2, 3, 4, 5, 6], () => {});
+    const arr = new ObservableArray({
+      items: [1, 2, 3, 4, 5, 6],
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const index = arr.findIndexToInsert("$10");
     expect(index).toBe(1);
   });
@@ -240,13 +354,25 @@ describe("raw values test", () => {
   let rawValues: any;
   test("rawvalues:get", () => {
     const items = [1, 2, 3, { data: "value", arr: [1, 2, 3] }, [1, 2, 3]];
-    const arr = new ObservableArray(items, () => {});
+    const arr = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     rawValues = serializeArray(arr);
     // console.log("rawValues", JSON.stringify(rawValues, null, 4));
     expect(rawValues.length).toBe(items.length);
   });
   test("rawvalues:set", () => {
-    const arr = new ObservableArray([], () => {});
+    const arr = new ObservableArray({
+      items: [],
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     arr.setRawValues(rawValues);
     console.log("arr", arr, arr[3], arr[3].arr, arr[3].data);
     expect(arr[0]).toBe(1);
@@ -268,11 +394,22 @@ describe("situational tests", () => {
   test("situation:1", async () => {
     const items = [1, 2, 3];
     const patches: TPatch[] = [];
-    const obs1 = new ObservableArray(items, (patch) => {
-      patches.push(patch);
-      console.log("[patch:change]", patch);
+    const obs1 = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches.push(patch);
+      },
     });
-    const obs2 = new ObservableArray(items, () => {});
+    const obs2 = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obs1[0] = 10;
     await sleep(100);
     expect(patches.length).toBe(1);
@@ -285,11 +422,22 @@ describe("situational tests", () => {
   test("situation:2", async () => {
     const items = [1, 2, 3];
     const patches: any[] = [];
-    const obs1 = new ObservableArray(items, (patch) => {
-      patches.push(patch);
-      console.log("[patch:new]", patch);
+    const obs1 = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches.push(patch);
+      },
     });
-    const obs2 = new ObservableArray(items, () => {});
+    const obs2 = new ObservableArray({
+      items,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obs1.push(10);
     await sleep(50);
     expect(patches.length).toBe(1);
@@ -298,11 +446,23 @@ describe("situational tests", () => {
     expect(obs2[3]).toBe(10);
   });
   test("situation:3", () => {
-    const arr1 = new ObservableArray([], () => {});
+    const arr1 = new ObservableArray({
+      items: [],
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const items = [1, 2, 3];
     items.forEach((item) => arr1.push(item));
     const serializedArray = serializeArray(arr1);
-    const arr2 = new ObservableArray([], () => {});
+    const arr2 = new ObservableArray({
+      items: [],
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     arr2.setRawValues(serializedArray);
     expect(arr2.length).toBe(items.length);
     for (let i = 0; i < items.length; i++) {
@@ -317,7 +477,13 @@ describe("situational tests", () => {
       { id: 3, text: "", done: false },
     ];
     const d = { todos: items };
-    const obj1 = new ObservableObject(d, () => {});
+    const obj1 = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const additionalItems = [
       { id: 4, text: "", done: false },
       { id: 5, text: "", done: false },
@@ -339,7 +505,13 @@ describe("situational tests", () => {
       { id: 3, text: "", done: false },
     ];
     const d = { todos: items };
-    const obj1 = new ObservableObject(d, () => {});
+    const obj1 = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const additionalItems = [
       { id: 4, text: "", done: false },
       { id: 5, text: "", done: false },
@@ -354,7 +526,13 @@ describe("situational tests", () => {
     }
 
     const serializedObject = serializeObject(obj1);
-    const obj2 = new ObservableObject({}, () => {});
+    const obj2 = new ObservableObject({
+      object: d,
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     obj2.setRawValues(serializedObject);
     expect(obj2.todos.length).toBe(items.length + additionalItems.length);
     for (let i = 0; i < obj2.todos.length - 1; i++) {
@@ -365,8 +543,12 @@ describe("situational tests", () => {
     /**
      * array values added from patch should be observable
      */
-    const obj1 = new ObservableObject({ todos: [] }, (patch) => {
-      console.log("[patch]", patch);
+    const obj1 = new ObservableObject({
+      object: { todos: [] },
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {},
     });
     const addPatch = {
       op: "add",
@@ -397,8 +579,12 @@ describe("situational tests", () => {
         { id: 7, text: "", done: false },
       ];
       const d = { todos: items };
-      const obj1 = new ObservableObject(d, (patch) => {
-        console.log("[patch]", patch);
+      const obj1 = new ObservableObject({
+        object: d,
+        onChange: () => {},
+        actorId: "a",
+        collectionName: "",
+        emitPatch: (patch) => {},
       });
 
       /**
@@ -423,7 +609,13 @@ describe("situational tests", () => {
 
 describe("what happens when patches arrive out of order", () => {
   test("array:add:unordered", () => {
-    const arr = new ObservableArray([], () => {});
+    const arr = new ObservableArray({
+      items: [],
+      onChange: () => {},
+      actorId: "",
+      collectionName: "",
+      emitPatch: (patch) => {},
+    });
     const patch1: TPatch = {
       op: "add",
       path: "/$10",
