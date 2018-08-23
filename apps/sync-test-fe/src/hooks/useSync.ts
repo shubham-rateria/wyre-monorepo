@@ -5,6 +5,7 @@ interface UseSyncParams {
   data: any;
   collectionName: string;
   id: string;
+  onChange?: (patch: any) => void;
 }
 
 export const useSync = (params: UseSyncParams) => {
@@ -13,12 +14,15 @@ export const useSync = (params: UseSyncParams) => {
   const [data, setData] = useState(params.data);
 
   const onChange = (patch: any) => {
-    console.log("[onChange]");
+    console.log("[onChange]", patch, data);
+    if (params.onChange) {
+      params.onChange(patch);
+    }
     setValue((value) => value + 1);
   };
 
   const onSet = () => {
-    console.log("[onChange]");
+    console.log("[onSet]");
     setChangeValue((value) => value + 1);
   };
 
@@ -31,7 +35,7 @@ export const useSync = (params: UseSyncParams) => {
       onChange,
       onSet,
     });
-    // onChange();
+    setValue((value) => value + 1);
     setData(loadedData);
   };
 
