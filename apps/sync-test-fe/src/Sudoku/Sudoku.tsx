@@ -2,6 +2,7 @@ import sudoku from "../utils/sudoku";
 import React from "react";
 import { SyncManager } from "@wyre-client/core";
 import { useState } from "react";
+import { useSync } from "../hooks/useSync";
 
 const ROWS = 9;
 const COLS = 9;
@@ -20,25 +21,19 @@ interface GridData {
 export const Sudoku: React.FC = () => {
   const forceUpdate = useForceUpdate();
   const [data, setData] = useState<any>([]);
-  const stateRef = React.useRef<any>();
+
+  const synced = useSync({
+    data: { grid: [] },
+    collectionName: "sudoku",
+    id: "sudoku1",
+    onChange: (patch) => listenForChanges(patch),
+  });
 
   const listenForChanges = (patch: any) => {
-    forceUpdate();
+    console.log("[onChange]", data);
   };
 
-  const loadData = async () => {
-    const initialData = { grid: [], candidates: [] };
-    const data = await SyncManager.create({
-      data: initialData,
-      collectionName: "sudoku",
-      refid: "sudoku1",
-      onChange: (patch) => listenForChanges(patch),
-      onSet: () => forceUpdate(),
-    });
-    return data;
-  };
-
-  const [candidates, setCandidates] = React.useState<any>([]);
+  const [_candidates, setCandidates] = React.useState<any>([]);
   const [loaded, setLoaded] = React.useState(false);
 
   const generateGrid = () => {
@@ -61,15 +56,14 @@ export const Sudoku: React.FC = () => {
   };
 
   React.useEffect(() => {
-    loadData().then((data: any) => {
-      if (data.grid?.length === 0) {
-        const { grid, candidates } = generateGrid();
-        data.grid = grid;
-        data.candidates = candidates;
+    synced.init().then((loadedData: any) => {
+      console.log("[loaded]", loadedData);
+      if (loadedData.grid?.length === 0) {
+        const { grid } = generateGrid();
+        loadedData.grid = grid;
       }
-      console.log("[data:grid]", data.grid);
-      stateRef.current = data;
-      setData(data);
+      console.log("[loadedData:grid]", loadedData.grid);
+      setData(loadedData);
       setLoaded(true);
     });
   }, []);
@@ -84,12 +78,12 @@ export const Sudoku: React.FC = () => {
     }
     data.grid[rIndex][cIndex].value = value;
 
-    const toString = sudoku.board_grid_to_string(data.toJSON().grid || []);
-    const candidates: any[][] | boolean = sudoku.get_candidates(toString);
-    console.log("[candidates]", candidates);
-    if (candidates) {
-      setCandidates(candidates);
-    }
+    // const toString = sudoku.board_grid_to_string(data.toJSON().grid || []);
+    // const candidates: any[][] | boolean = sudoku.get_candidates(toString);
+    // console.log("[candidates]", candidates);
+    // if (candidates) {
+    //   setCandidates(candidates);
+    // }
   };
 
   return (
