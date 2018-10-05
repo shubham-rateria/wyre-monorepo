@@ -8,15 +8,12 @@ import { Counter } from "./Counter/Counter";
 import { MultipleInputs } from "./MultipleInputs/MultipleInputs";
 import { Dict } from "./Dict/Dict";
 import { Sudoku } from "./Sudoku/Sudoku";
+import { Presence } from "./Presence/Presence";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
-root.render(
-  // <React.StrictMode>
-  <Todo />
-  // </React.StrictMode>
-);
+root.render(<Todo />);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

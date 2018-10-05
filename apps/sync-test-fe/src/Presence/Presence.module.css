@@ -1,0 +1,58 @@
+.OuterContainer {
+  height: 100vh;
+  width: 100vw;
+  background: #222222;
+  cursor: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+}
+
+.Container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+}
+
+.Avatar {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  border: 2px solid white;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+}
+
+.MouseStatus {
+  height: auto;
+  width: 60px;
+  font-size: 12px;
+  padding: 2px;
+  text-transform: uppercase;
+  color: white;
+}
+
+.MouseStatusUp {
+  background: red;
+  color: white;
+}
+
+.MouseStatusDown {
+  background: yellow;
+  color: black;
+}
+
+.MouseStatusDragging {
+  background: white;
+  color: black;
+}
+
+@media screen and (max-width: 500px) {
+  .OuterContainer {
+    height: 100%;
+    width: 100%;
+  }
+}

@@ -3,8 +3,8 @@ import { SyncManager } from "@wyre-client/core";
 
 interface UseSyncParams {
   data: any;
-  collectionName: string;
-  id: string;
+  collectionName?: string;
+  id?: string;
   onChange?: (patch: any) => void;
 }
 
@@ -23,12 +23,10 @@ export const useSync = (params: UseSyncParams) => {
     console.log("[useSync:init]");
     const loadedData: any = await SyncManager.create({
       data: params.data,
-      collectionName: params.collectionName,
-      refid: id || params.id,
+      collectionName: params.collectionName ?? "",
+      refid: id ?? "",
       onChange,
     });
-    // setData(loadedData);
-    // console.log("[useSync:loaded]", loadedData, data);
     setValue((value) => value + 1);
     return loadedData;
   };
