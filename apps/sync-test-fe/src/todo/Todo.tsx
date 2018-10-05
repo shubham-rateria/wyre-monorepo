@@ -71,8 +71,8 @@ export const Todo: React.FC = () => {
   const load = async () => {
     setLoaded(false);
     const loadedData = await sync.init(todoId);
-    const presenceDetails = await presence.init("presence1", name);
-    setPresenceDetails(presenceDetails);
+    // const presenceDetails = await presence.init("presence4", name);
+    // setPresenceDetails(presenceDetails);
     setData(loadedData);
     setLoaded(true);
   };

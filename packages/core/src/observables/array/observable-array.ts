@@ -176,12 +176,6 @@ export default function ObservableArray({
         item.value !== null &&
         !item.isSerialized
       ) {
-        // const newItem = new ObservableObject(
-        //   {},
-        //   handleNonPrimitiveChildChange(key.toString()),
-        //   actorId,
-        //   onSet
-        // );
         const newItem = new ObservableObject({
           object: {},
           emitPatch: handleNonPrimitiveChildChange(key.toString()),
@@ -192,12 +186,6 @@ export default function ObservableArray({
         newItem.setRawValues(item.value);
         valueToSet = newItem;
       } else if (Array.isArray(item.value)) {
-        // const newItem = new ObservableArray(
-        //   [],
-        //   handleNonPrimitiveChildChange(key.toString()),
-        //   _actorId,
-        //   onSet
-        // );
         const newItem = new ObservableArray({
           items: [],
           emitPatch: handleNonPrimitiveChildChange(key.toString()),
@@ -215,23 +203,14 @@ export default function ObservableArray({
        * if the key exists, compare timestamps
        * and apply change
        */
-      const arrayIndex = crdtIndexToArrayIndex(key.toString());
-      console.log("[setrawvalues:array:arrayIndex]", arrayIndex);
-      if (arrayIndex !== -1) {
-        const arrayValue: ArrayValue = _array[arrayIndex];
-        if (arrayValue.timestamp.lessThan(timestamp) && !arrayValue.tombstone) {
-          console.log("[setrawvalues:array:existing ts]", arrayValue);
-          arrayValue.timestamp = timestamp;
-          arrayValue.value = valueToSet;
-        }
-      } else {
-        console.log("[setrawvalues:array:new]", item);
-        item.timestamp = timestamp;
-        item.key = key;
-        _array.push({ ...item, key, timestamp, value: valueToSet });
-        defineIndexProperty(i);
-        defineIndexProperty(key.toString());
-      }
+      // const arrayIndex = crdtIndexToArrayIndex(key.toString());
+      // console.log("[setrawvalues:array:arrayIndex]", arrayIndex);
+      console.log("[setrawvalues:array:new]", item);
+      item.timestamp = timestamp;
+      item.key = key;
+      _array.push({ ...item, key, timestamp, value: valueToSet });
+      defineIndexProperty(i);
+      defineIndexProperty(key.toString());
     }
   }
 
@@ -341,6 +320,8 @@ export default function ObservableArray({
         timestampValue.seq
       );
 
+      console.log("[addNewValueFromPatch:incomingTimestamp]", timestamp);
+
       const key = Key.fromString(crdtIndex);
       const transformedValue = getValueToSet(key.toString(), value);
 
@@ -351,59 +332,48 @@ export default function ObservableArray({
        * This will happen only when we have not seen the add patch
        * seen replace then seeing add.
        */
-      if (crdtIndexToArrayIndex(crdtIndex) !== -1) {
-        const changeIndex = crdtIndexToArrayIndex(crdtIndex);
+      const rawValue: ArrayValue = {
+        value: transformedValue,
+        timestamp: timestamp,
+        isPrimitive: isPrimitiveType(value) || false,
+        key: key,
+        tombstone: false,
+      };
 
-        const rawValue = _array[changeIndex];
+      /**
+       * Find index to insert into.
+       * Move the other elements by 1
+       */
 
-        if (canWrite(rawValue, timestamp)) {
-          rawValue.value = transformedValue;
-          rawValue.timestamp = timestamp;
-          rawValue.tombstone = false;
-          onChange();
-        }
+      const insertIndex: number = findIndexToInsert(key.toString(), timestamp);
+
+      console.log("[addNewValueFromPatch:insertIndex]", _actorId, insertIndex);
+
+      if (insertIndex >= _array.length) {
+        _array[insertIndex] = rawValue;
+        onChange();
       } else {
-        const rawValue: ArrayValue = {
-          value: transformedValue,
-          timestamp: timestamp,
-          isPrimitive: isPrimitiveType(value) || false,
-          key: key,
-          tombstone: false,
-        };
-
         /**
-         * Find index to insert into.
-         * Move the other elements by 1
+         * Move all elements after index
          */
-
-        const insertIndex: number = findIndexToInsert(key.toString());
-
-        if (insertIndex >= _array.length) {
-          _array[insertIndex] = rawValue;
-          onChange();
-        } else {
-          /**
-           * Move all elements after index
-           */
-          const spliced = _array.splice(insertIndex, _array.length);
-          _array.push(rawValue);
-          _array.push(...spliced);
-          onChange();
-        }
-
-        /**
-         * this is a new crdt index,
-         * define index property for get
-         */
-        defineIndexProperty(key.toString());
-
-        /**
-         * insert index is already defined, i.e.,
-         * existing index. We have to add a new index for the last
-         * element of the array
-         */
-        defineIndexProperty(_array.length - 1);
+        const spliced = _array.splice(insertIndex, _array.length);
+        _array.push(rawValue);
+        _array.push(...spliced);
+        onChange();
       }
+
+      /**
+       * this is a new crdt index,
+       * define index property for get
+       */
+      defineIndexProperty(key.toString());
+
+      /**
+       * insert index is already defined, i.e.,
+       * existing index. We have to add a new index for the last
+       * element of the array
+       */
+      defineIndexProperty(_array.length - 1);
     },
   });
 
@@ -495,7 +465,7 @@ export default function ObservableArray({
     },
   });
 
-  function findIndexToInsert(key: Key | string): number {
+  function findIndexToInsert(key: Key | string, timestamp: Timestamp): number {
     /**
      * We need to find an index where this key
      * is > previousKey and < nextKey.
@@ -512,23 +482,36 @@ export default function ObservableArray({
     const compareKey = key instanceof Key ? key : Key.fromString(key);
 
     for (let i = 0; i < _array.length; i++) {
+      console.log("[findIndexToInsert:checking]", i);
       const key = _array[i].key;
-      if (key.lessThan(compareKey)) {
+      const t = _array[i].timestamp;
+      if (compareKey.isEqual(key)) {
+        console.log("compareKey === key", compareKey, key);
+        console.log("externalTimestamp", timestamp);
+        console.log("internalTimestamp", t);
+        if (timestamp.lessThan(t)) {
+          index = i;
+        } else {
+          index = i + 1;
+        }
+        return index;
+      }
+      if (compareKey.lessThan(key)) {
         index = i;
       }
     }
 
-    return index + 1;
+    return index === -1 ? _array.length : index;
   }
 
-  Object.defineProperty(_self, "findIndexToInsert", {
-    configurable: false,
-    enumerable: false,
-    writable: false,
-    value: function (key: string) {
-      return findIndexToInsert(key);
-    },
-  });
+  // Object.defineProperty(_self, "findIndexToInsert", {
+  //   configurable: false,
+  //   enumerable: false,
+  //   writable: false,
+  //   value: function (key: string) {
+  //     return findIndexToInsert(key);
+  //   },
+  // });
 
   Object.defineProperty(_self, "applyPatch", {
     configurable: false,

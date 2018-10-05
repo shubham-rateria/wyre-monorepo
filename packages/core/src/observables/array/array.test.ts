@@ -337,17 +337,17 @@ describe("tests for array", () => {
     obs.applyPatch(patch);
     expect(obs.todos[0].done).toBe(true);
   });
-  test("arr:findindextoinsert", () => {
-    const arr = new ObservableArray({
-      items: [1, 2, 3, 4, 5, 6],
-      onChange: () => {},
-      actorId: "a",
-      collectionName: "",
-      emitPatch: (patch) => {},
-    });
-    const index = arr.findIndexToInsert("$10");
-    expect(index).toBe(1);
-  });
+  // test("arr:findindextoinsert", () => {
+  //   const arr = new ObservableArray({
+  //     items: [1, 2, 3, 4, 5, 6],
+  //     onChange: () => {},
+  //     actorId: "a",
+  //     collectionName: "",
+  //     emitPatch: (patch) => {},
+  //   });
+  //   const index = arr.findIndexToInsert("$10");
+  //   expect(index).toBe(1);
+  // });
 });
 
 describe("raw values test", () => {
@@ -434,15 +434,17 @@ describe("situational tests", () => {
     const obs2 = new ObservableArray({
       items,
       onChange: () => {},
-      actorId: "",
+      actorId: "b",
       collectionName: "",
       emitPatch: (patch) => {},
     });
     obs1.push(10);
     await sleep(50);
     expect(patches.length).toBe(1);
+    console.log("patches", patches);
     obs2.applyPatch(patches[0]);
     expect(obs2.length).toBe(4);
+    console.log(obs2.toJSON());
     expect(obs2[3]).toBe(10);
   });
   test("situation:3", () => {
@@ -620,37 +622,99 @@ describe("what happens when patches arrive out of order", () => {
       op: "add",
       path: "/$10",
       value: 2,
-      actorId: "",
+      actorId: "a",
       seq: 1,
     };
     const patch2: TPatch = {
       op: "add",
       path: "/$0",
       value: 1,
-      actorId: "",
+      actorId: "a",
       seq: 1,
     };
     const patch3: TPatch = {
       op: "add",
       path: "/$30",
       value: 4,
-      actorId: "",
+      actorId: "a",
       seq: 1,
     };
     const patch4: TPatch = {
       op: "add",
       path: "/$20",
       value: 3,
-      actorId: "",
+      actorId: "a",
       seq: 1,
     };
     arr.applyPatch(patch1);
     arr.applyPatch(patch2);
     arr.applyPatch(patch3);
     arr.applyPatch(patch4);
+    console.log("[arr:value]", arr.toJSON());
     expect(arr[0]).toBe(1);
     expect(arr[1]).toBe(2);
     expect(arr[2]).toBe(3);
     expect(arr[3]).toBe(4);
+  });
+});
+
+describe("what happens when multiple users add at the same index", () => {
+  test("multiple:add:index:same", () => {
+    const actorIds = ["D-ka0x7yAZZjWIFRAAAd", "NbXy7NXX0ygN7YqRAAAT"];
+    const actors: any[] = [];
+    for (const id of actorIds) {
+      const arr = new ObservableObject({
+        object: { todos: [] },
+        onChange: (patch) => {},
+        actorId: id,
+        collectionName: "",
+        emitPatch: (patch) => {
+          console.log(patch);
+        },
+      });
+      actors.push(arr);
+    }
+    actors[0].todos.push({ text: "1" });
+    const patch0: TPatch = {
+      op: "add",
+      path: "/todos/$0",
+      value: { text: "1" },
+      actorId: actorIds[0],
+      seq: 1,
+    };
+    actors[1].todos.push({ text: "2" });
+    const patch1: TPatch = {
+      op: "add",
+      path: "/todos/$0",
+      value: { text: "2" },
+      actorId: actorIds[1],
+      seq: 1,
+    };
+    actors[0].applyPatch(patch1);
+    actors[1].applyPatch(patch0);
+    console.log("actors[0]", actors[0].toJSON());
+    console.log("actors[1]", actors[1].toJSON());
+    actors[0].todos.push({ text: "3" });
+    const patch2: TPatch = {
+      op: "add",
+      path: "/todos/$10",
+      value: { text: "3" },
+      actorId: actorIds[0],
+      seq: 1,
+    };
+    actors[1].todos.push({ text: "4" });
+    const patch3: TPatch = {
+      op: "add",
+      path: "/todos/$10",
+      value: { text: "4" },
+      actorId: actorIds[1],
+      seq: 1,
+    };
+    actors[0].applyPatch(patch3);
+    actors[1].applyPatch(patch2);
+    console.log("actors[0]", actors[0].toJSON());
+    console.log("actors[1]", actors[1].toJSON());
+    // expect(actors[0][0]).toBe(actors[1][0]);
+    // expect(actors[0][1]).toBe(actors[1][1]);
   });
 });
