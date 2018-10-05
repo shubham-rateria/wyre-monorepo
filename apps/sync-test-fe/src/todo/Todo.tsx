@@ -61,6 +61,11 @@ export const Todo: React.FC = () => {
   const [name, setName] = useState("");
 
   /**
+   * are we syncing?
+   */
+  const [syncing, setSyncing] = useState(false);
+
+  /**
    * This is where the magic happens
    */
   const sync = useSync({
@@ -71,8 +76,8 @@ export const Todo: React.FC = () => {
   const load = async () => {
     setLoaded(false);
     const loadedData = await sync.init(todoId);
-    // const presenceDetails = await presence.init("presence4", name);
-    // setPresenceDetails(presenceDetails);
+    const presenceDetails = await presence.init("presence6", name);
+    setPresenceDetails(presenceDetails);
     setData(loadedData);
     setLoaded(true);
   };
@@ -155,6 +160,7 @@ export const Todo: React.FC = () => {
 
   return (
     <div className="container">
+      {syncing && <div>Syncing...</div>}
       <div className="avatars">
         <Avatar.Group>
           {presenceDetails?.users.keys().map((userId: string) => {

@@ -4,12 +4,13 @@ import { SyncManager } from "@wyre-client/core";
 interface UseSyncParams {
   data: any;
   collectionName?: string;
-  id?: string;
   onChange?: (patch: any) => void;
 }
 
 export const useSync = (params: UseSyncParams) => {
   const [value, setValue] = useState(0);
+  const [loadedData, setLoadedData] = useState<any>();
+  const [id, setId] = useState("");
 
   const onChange = (patch: any) => {
     console.log("[onChange]", patch);
@@ -19,17 +20,28 @@ export const useSync = (params: UseSyncParams) => {
     setValue((value) => value + 1);
   };
 
-  const init: (id?: string) => Promise<any> = async (id?: string) => {
+  const sync = async () => {
+    const syncData = await SyncManager.sync(id);
+    if (syncData) {
+      // @ts-ignore
+      loadedData.setRawValues(syncData);
+      setValue((value) => value + 1);
+    }
+  };
+
+  const init: (id: string) => Promise<any> = async (id: string) => {
     console.log("[useSync:init]");
+    setId(id);
     const loadedData: any = await SyncManager.create({
       data: params.data,
       collectionName: params.collectionName ?? "",
       refid: id ?? "",
       onChange,
     });
+    setLoadedData(loadedData);
     setValue((value) => value + 1);
     return loadedData;
   };
 
-  return { init, value };
+  return { init, value, sync };
 };
