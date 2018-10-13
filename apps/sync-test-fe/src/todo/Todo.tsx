@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Avatar, Button, Col, Input, Row, Space } from "antd";
 import Modal from "antd/es/modal/Modal";
 import React, { useState } from "react";
@@ -53,17 +54,12 @@ export const Todo: React.FC = () => {
   /**
    * The id of this todo list
    */
-  const [todoId, setTodoId] = useState("mytodos12");
+  const [todoId, setTodoId] = useState("");
 
   /**
    * Your name
    */
   const [name, setName] = useState("");
-
-  /**
-   * are we syncing?
-   */
-  const [syncing, setSyncing] = useState(false);
 
   /**
    * This is where the magic happens
@@ -75,10 +71,24 @@ export const Todo: React.FC = () => {
 
   const load = async () => {
     setLoaded(false);
-    const loadedData = await sync.init(todoId);
-    const presenceDetails = await presence.init("presence6", name);
+    const data = await sync.init(todoId);
+
+    /**
+     * interface IUserDetails {
+     *  mousePosition: number[];
+     *  mouseState: MOUSE_STATE;
+     *  name: string;
+     *  userColor: string;
+     * }
+     *
+     * interface IRoomData {
+     *  users: { userId: IUserDetails }
+     * }
+     *
+     */
+    const presenceDetails = await presence.init("todopresence", name);
     setPresenceDetails(presenceDetails);
-    setData(loadedData);
+    setData(data);
     setLoaded(true);
   };
 
@@ -99,12 +109,8 @@ export const Todo: React.FC = () => {
   };
 
   const handleTodoDelete = (todo: Todo) => {
-    const index = data.todos.indexOf(
-      // @ts-ignore
-      (_todo: Todo) => _todo.text === todo.text
-    );
+    const index = data.todos.indexOf((_todo: Todo) => _todo.text === todo.text);
     if (index !== -1) {
-      // @ts-ignore
       data.todos.delete(index);
     }
   };
@@ -160,7 +166,6 @@ export const Todo: React.FC = () => {
 
   return (
     <div className="container">
-      {syncing && <div>Syncing...</div>}
       <div className="avatars">
         <Avatar.Group>
           {presenceDetails?.users.keys().map((userId: string) => {
@@ -186,6 +191,7 @@ export const Todo: React.FC = () => {
             className="cursor"
           >
             <Cursor color={presenceDetails.users[userId].userColor} />
+            <div>{presenceDetails.users[userId].mouseState}</div>
           </div>
         );
       })}

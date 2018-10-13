@@ -57,7 +57,7 @@ export const usePresence = () => {
     loadedData?.users.delete(id);
   };
 
-  const init: (roomId: string, name?: string) => Promise<any> = async (
+  const init: (roomId: string, name?: string) => Promise<IRoomData> = async (
     roomId: string,
     name?: string
   ) => {

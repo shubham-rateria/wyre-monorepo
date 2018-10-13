@@ -41,7 +41,7 @@ type UserDetails = {
 };
 
 export class _SyncManager {
-  socketEndpoint = "http://172.20.10.3:3002";
+  socketEndpoint = "http://192.168.7.176:3002";
   socketConfig = { path: "/socket.io" };
   public _io = io(this.socketEndpoint, this.socketConfig);
   socketId: string = "";
