@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { SyncManager } from "@wyre-client/core";
 import { debounce } from "lodash";
+import { useMemo, useState } from "react";
+import { SyncManager } from "../sync/sync";
 
 type MOUSE_STATE = "up" | "down" | "dragging";
 
