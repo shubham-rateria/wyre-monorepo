@@ -20,6 +20,12 @@ export class Timestamp {
       if (timestamp.timestamp.actorId === "") {
         return true;
       }
+      console.log(
+        "[timestamp:lessThan:compareActorId]",
+        this.timestamp.actorId,
+        timestamp.timestamp.actorId,
+        this.timestamp.actorId < timestamp.timestamp.actorId
+      );
       return this.timestamp.actorId < timestamp.timestamp.actorId;
     }
   }
