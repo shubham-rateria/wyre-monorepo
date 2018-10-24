@@ -5,6 +5,7 @@ import { TPatch } from "../types/patch.type";
 import { cloneDeep } from "lodash";
 import ObservableArray from "../observables/array/observable-array";
 import isArrayType from "../helpers/isArrayType";
+import notepack from "notepack.io";
 
 interface RegisterParams {
   collectionName: string;
@@ -118,15 +119,10 @@ export class _SyncManager {
         resolve(null);
       });
 
-      this._io.on("sync:response:" + roomName, (data) => {
-        const syncData = cloneDeep(data);
-        console.log(
-          "[sync:res]",
-          roomName,
-          syncData,
-          typeof data,
-          typeof syncData
-        );
+      this._io.on("sync:response:" + roomName, (dataBuffer) => {
+        // const syncData = cloneDeep(data);
+        console.log("[sync:res]", roomName, dataBuffer);
+        let data = notepack.decode(new Uint8Array(dataBuffer));
         clearTimeout(timer);
         resolve(data);
       });
@@ -145,7 +141,8 @@ export class _SyncManager {
         this._io.emit("sync:no-sync", roomName, socketId);
       }
       const data = serialize(this.objects[roomName].data);
-      this._io.emit("sync:response:" + roomName, data, socketId);
+      const dataBuffer = notepack.encode(data);
+      this._io.emit("sync:response:" + roomName, dataBuffer, socketId);
       console.log("[sync:request] sent", data, "sync:response:" + roomName);
     });
   }
@@ -155,7 +152,11 @@ export class _SyncManager {
     onChange: (patch: TPatch) => void,
     roomName: string
   ) {
-    this._io.on("syncPatches:" + roomName, (patch) => {
+    this._io.on("syncPatches:" + roomName, (patchBuffer) => {
+      console.log("[sync:newpatch:buffer]", patchBuffer);
+
+      let patch = notepack.decode(new Uint8Array(patchBuffer));
+
       console.log("[sync:newpatch]", patch);
 
       if (patch.path === "/PEOPLE_IN_ROOM") {
@@ -255,11 +256,11 @@ export class _SyncManager {
 
   getPatchSendHandler = (roomName: string, collectionName: string) => {
     const patchSendHandler = async (patch: TPatch) => {
-      patch.refid = roomName;
       patch.collectionName = collectionName;
       patch.actorId = this._io.id;
-      console.log("[patchemit]", patch);
-      this._io.emit("patch", patch);
+      patch.socketId = this._io.id;
+      const buffer = notepack.encode(patch);
+      this._io.emit("patch", roomName, buffer);
     };
     return patchSendHandler;
   };
