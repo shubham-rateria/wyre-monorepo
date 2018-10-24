@@ -1,8 +1,8 @@
 {
   "branches": [
-    "rateria/shu-58-keygen-integration",
-    "staging"
+    "master"
   ],
+  "ci": false,
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
