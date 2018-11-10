@@ -13,6 +13,13 @@ export class Timestamp {
     };
   }
 
+  equalTo(timestamp: Timestamp) {
+    return (
+      this.timestamp.actorId === timestamp.timestamp.actorId &&
+      this.timestamp.seq === timestamp.timestamp.seq
+    );
+  }
+
   lessThan(timestamp: Timestamp) {
     if (this.timestamp.seq < timestamp.timestamp.seq) {
       return true;

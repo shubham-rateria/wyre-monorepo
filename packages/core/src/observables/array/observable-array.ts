@@ -345,9 +345,12 @@ export default function ObservableArray({
        * Move the other elements by 1
        */
 
-      const insertIndex: number = findIndexToInsert(key.toString(), timestamp);
-
+      const insertIndex = findIndexToInsert(key.toString(), timestamp);
       console.log("[addNewValueFromPatch:insertIndex]", _actorId, insertIndex);
+
+      if (insertIndex === null) {
+        return;
+      }
 
       if (insertIndex >= _array.length) {
         _array[insertIndex] = rawValue;
@@ -465,7 +468,10 @@ export default function ObservableArray({
     },
   });
 
-  function findIndexToInsert(key: Key | string, timestamp: Timestamp): number {
+  function findIndexToInsert(
+    key: Key | string,
+    timestamp: Timestamp
+  ): number | null {
     /**
      * We need to find an index where this key
      * is > previousKey and < nextKey.
@@ -491,6 +497,8 @@ export default function ObservableArray({
         console.log("internalTimestamp", t);
         if (timestamp.lessThan(t)) {
           index = i;
+        } else if (timestamp.equalTo(t)) {
+          return null;
         } else {
           index = i + 1;
         }
