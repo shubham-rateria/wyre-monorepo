@@ -419,7 +419,6 @@ export default function ObservableArray({
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
       emitPatch(patch);
-      onChange(patch);
     }
     if (event.type === "itemadded") {
       const patch: TPatch = {
@@ -432,7 +431,6 @@ export default function ObservableArray({
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
       emitPatch(patch);
-      onChange(patch);
     }
     if (event.type === "itemdeleted") {
       const patch: TPatch = {
@@ -445,7 +443,6 @@ export default function ObservableArray({
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
       emitPatch(patch);
-      onChange(patch);
     }
   }
 

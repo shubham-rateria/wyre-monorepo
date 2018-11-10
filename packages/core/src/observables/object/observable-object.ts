@@ -524,7 +524,6 @@ export function ObservableObject({
         seq: event.timestamp.seq,
       };
       emitPatch(patch);
-      onChange(patch);
     }
 
     if (event.type === "itemadded") {
@@ -536,7 +535,6 @@ export function ObservableObject({
         seq: event.timestamp.seq,
       };
       emitPatch(patch);
-      onChange(patch);
     }
 
     if (event.type === "itemdeleted") {
@@ -548,7 +546,6 @@ export function ObservableObject({
         seq: event.timestamp.seq,
       };
       emitPatch(patch);
-      onChange(patch);
     }
   }
 
