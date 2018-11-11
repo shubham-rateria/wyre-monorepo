@@ -4,7 +4,7 @@ import { SyncManager } from "../sync/sync";
 interface UseSyncParams {
   data: any;
   collectionName?: string;
-  onChange?: (patch: any) => void;
+  onChange?: () => void;
 }
 
 export const useSync = (params: UseSyncParams) => {
@@ -15,7 +15,7 @@ export const useSync = (params: UseSyncParams) => {
   const onChange = (patch: any) => {
     console.log("[onChange]", patch);
     if (params.onChange) {
-      params.onChange(patch);
+      params.onChange();
     }
     setValue((value) => value + 1);
   };
