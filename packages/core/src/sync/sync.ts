@@ -169,7 +169,7 @@ export class _SyncManager {
 
       // @ts-ignore
       data.applyPatch(patch);
-      onChange(patch);
+      // onChange(patch);
     });
   }
 
