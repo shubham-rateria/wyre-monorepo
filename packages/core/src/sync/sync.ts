@@ -12,6 +12,7 @@ interface RegisterParams {
   refid: string;
   data: any;
   onChange: (patch?: TPatch) => void;
+  onLocalChange: () => void;
   name?: string;
   onConnect?: () => void;
 }
@@ -215,6 +216,7 @@ export class _SyncManager {
         actorId: this.socketId,
         collectionName: params.collectionName,
         onChange: params.onChange,
+        onLocalChange: params.onLocalChange,
       });
     } else if (typeof params.data === "object" && params.data !== null) {
       _data = new ObservableObject({
@@ -226,6 +228,7 @@ export class _SyncManager {
         actorId: this.socketId,
         collectionName: params.collectionName,
         onChange: params.onChange,
+        onLocalChange: params.onLocalChange,
       });
     } else {
       throw new Error(`We do not support ${typeof params.data} yet.`);
