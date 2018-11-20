@@ -2,7 +2,6 @@ import { io } from "socket.io-client";
 import { ObservableObject } from "../observables/object/observable-object";
 import { serialize, serializeObject } from "../observables/utils/serialize";
 import { TPatch } from "../types/patch.type";
-import { cloneDeep } from "lodash";
 import ObservableArray from "../observables/array/observable-array";
 import isArrayType from "../helpers/isArrayType";
 import notepack from "notepack.io";
