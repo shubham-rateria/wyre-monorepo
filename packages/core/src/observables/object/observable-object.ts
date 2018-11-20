@@ -125,6 +125,7 @@ export function ObservableObject({
       _object[key].timestamp.increment();
       _object[key].timestamp.timestamp.actorId = _actorId;
       _object[key].tombstone = true;
+      return true;
     }
   }
 
@@ -133,12 +134,14 @@ export function ObservableObject({
     writable: false,
     configurable: false,
     value: function (key: string) {
-      deleteKey(key);
-      raiseEvent({
-        type: "itemdeleted",
-        path: "/" + key,
-        timestamp: _object[key].timestamp.timestamp,
-      });
+      const keyPresent = deleteKey(key);
+      if (keyPresent) {
+        raiseEvent({
+          type: "itemdeleted",
+          path: "/" + key,
+          timestamp: _object[key].timestamp.timestamp,
+        });
+      }
     },
   });
 
