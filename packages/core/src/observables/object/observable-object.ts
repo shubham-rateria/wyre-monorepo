@@ -11,7 +11,7 @@ import {
 } from "../utils/serialize";
 import { objectToJSON } from "../utils/toJSON";
 import { apply } from "./patch/patch";
-import {cloneDeep} from 'lodash';
+import lodash from "lodash";
 
 type TSimpleValue = number | string | null | undefined | object;
 
@@ -125,6 +125,7 @@ export function ObservableObject({
       _object[key].timestamp.increment();
       _object[key].timestamp.timestamp.actorId = _actorId;
       _object[key].tombstone = true;
+      return true;
     }
   }
 
@@ -133,19 +134,21 @@ export function ObservableObject({
     writable: false,
     configurable: false,
     value: function (key: string) {
-      deleteKey(key);
-      raiseEvent({
-        type: "itemdeleted",
-        path: "/" + key,
-        timestamp: _object[key].timestamp.timestamp,
-      });
+      const keyPresent = deleteKey(key);
+      if (keyPresent) {
+        raiseEvent({
+          type: "itemdeleted",
+          path: "/" + key,
+          timestamp: _object[key].timestamp.timestamp,
+        });
+      }
     },
   });
 
   function setRawValues(obj: {
     [key: string]: ObjectSerializedValue | ArraySerializedValue;
   }) {
-    const serializedObject = cloneDeep(obj);
+    const serializedObject = lodash.cloneDeep(obj);
     console.log("[setrawvalues:object]", serializedObject);
     /**
      * Iterate over the keys and check values
