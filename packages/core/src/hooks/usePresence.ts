@@ -1,4 +1,4 @@
-import { debounce } from "lodash";
+// import { debounce } from "lodash";
 import { useMemo, useState } from "react";
 import { SyncManager } from "../sync/sync";
 
@@ -112,10 +112,10 @@ export const usePresence = () => {
 
     // setup listeners for my mouse position move
 
-    const setXY = debounce((x, y) => {
+    const setXY = (x, y) => {
       console.log("[mouse:pos:change]", x, y);
       loadedData.users[id].mousePosition = [y, x];
-    }, 5);
+    };
 
     window.addEventListener("mousedown", (event) => {
       loadedData.users[id].mouseState = "down";
