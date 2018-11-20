@@ -1,9 +1,9 @@
 import { ObservableObject } from "./observable-object";
 import { TPatch } from "../../types/patch.type";
 import { serializeObject } from "../utils/serialize";
-import { cloneDeep } from "lodash";
 import ObservableArray from "../array/observable-array";
 
+const cloneDeep = require("lodash/cloneDeep");
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const actors = ["a", "b", "c", "d"];

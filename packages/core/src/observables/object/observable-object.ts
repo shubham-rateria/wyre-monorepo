@@ -1,4 +1,3 @@
-import { cloneDeep } from "lodash";
 import isArrayType from "../../helpers/isArrayType";
 import isPrimitiveType from "../../helpers/isPrimitiveType";
 import { Timestamp, TimestampValue } from "../../lamport";
@@ -12,6 +11,8 @@ import {
 } from "../utils/serialize";
 import { objectToJSON } from "../utils/toJSON";
 import { apply } from "./patch/patch";
+
+const cloneDeep = require("lodash/cloneDeep");
 
 type TSimpleValue = number | string | null | undefined | object;
 
