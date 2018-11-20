@@ -1,4 +1,4 @@
-// import { debounce } from "lodash";
+import lodash from "lodash";
 import { useMemo, useState } from "react";
 import { SyncManager } from "../sync/sync";
 
@@ -94,13 +94,13 @@ export const usePresence = () => {
       // onConnect: onConnect,
     });
 
-    SyncManager.setupEventListener(
-      "room:user:add:" + presenceId,
-      (data: any) => {
-        loadedData.users.delete(data.socketId);
-        setValue((value) => value + 1);
-      }
-    );
+    // SyncManager.setupEventListener(
+    //   "room:user:add:" + presenceId,
+    //   (data: any) => {
+    //     loadedData.users.delete(data.socketId);
+    //     setValue((value) => value + 1);
+    //   }
+    // );
 
     SyncManager.setupEventListener(
       "room:user:remove:" + presenceId,
@@ -112,10 +112,10 @@ export const usePresence = () => {
 
     // setup listeners for my mouse position move
 
-    const setXY = (x, y) => {
+    const setXY = lodash.debounce((x, y) => {
       console.log("[mouse:pos:change]", x, y);
       loadedData.users[id].mousePosition = [y, x];
-    };
+    }, 5);
 
     window.addEventListener("mousedown", (event) => {
       loadedData.users[id].mouseState = "down";
