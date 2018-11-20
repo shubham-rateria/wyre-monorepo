@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { usePresence } from "../hooks/usePresence";
+import { usePresence } from "@wyre-client/core";
 import { useState, useEffect } from "react";
 import styles from "./Presence.module.css";
 import clsx from "clsx";
@@ -39,6 +39,9 @@ export const Presence: React.FC = () => {
     setLoading(true);
     const presenceDetails = await presence.init({
       presenceId: "presenceroom",
+    });
+    presence.add({
+      name: "Shubham",
     });
     setPresenceDetails(presenceDetails);
     setLoaded(true);
