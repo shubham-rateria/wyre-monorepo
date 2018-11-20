@@ -24,8 +24,13 @@ export default [
     ],
     output: [
       {
-        file: `dist/index.js`,
+        file: `dist/mjs/index.js`,
         format: "es",
+        sourcemap: false,
+      },
+      {
+        file: `dist/cjs/index.js`,
+        format: "cjs",
         sourcemap: false,
       },
     ],
