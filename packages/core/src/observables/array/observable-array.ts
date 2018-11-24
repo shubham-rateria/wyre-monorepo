@@ -316,6 +316,8 @@ export default function ObservableArray({
        * Else do not.
        */
 
+      let triggerOnChange = false;
+
       if (!Key.isCrdtKey(crdtIndex.toString())) {
         throw new Error("Only CRDT keys can be used to apply patch on array.");
       }
@@ -359,7 +361,7 @@ export default function ObservableArray({
 
       if (insertIndex >= _array.length) {
         _array[insertIndex] = rawValue;
-        onChange();
+        triggerOnChange = true;
       } else {
         /**
          * Move all elements after index
@@ -367,7 +369,7 @@ export default function ObservableArray({
         const spliced = _array.splice(insertIndex, _array.length);
         _array.push(rawValue);
         _array.push(...spliced);
-        onChange();
+        triggerOnChange = true;
       }
 
       /**
@@ -382,6 +384,11 @@ export default function ObservableArray({
        * element of the array
        */
       defineIndexProperty(_array.length - 1);
+      console.log("[defineIndexProperty]", key.toString(), _array.length - 1);
+
+      if (triggerOnChange) {
+        onChange();
+      }
     },
   });
 
