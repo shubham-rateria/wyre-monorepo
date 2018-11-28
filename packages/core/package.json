@@ -1,6 +1,6 @@
 {
   "name": "@wyre-client/core",
-  "version": "0.4.15",
+  "version": "0.4.16",
   "description": "",
   "private": false,
   "source": "src/index.ts",
