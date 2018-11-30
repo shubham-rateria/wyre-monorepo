@@ -9,11 +9,13 @@ import { MultipleInputs } from "./MultipleInputs/MultipleInputs";
 import { Dict } from "./Dict/Dict";
 import { Presence } from "./Presence/Presence";
 import { LiveComments } from "./LiveComments/LiveComments";
+import { LiveCommentsAbsolute } from "./LiveComments/LiveCommentsAbsolute";
+import { TestGCL } from "./LiveComments/TestGCL";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
-root.render(<Todo />);
+root.render(<TestGCL />);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
