@@ -249,12 +249,17 @@ export class _SyncManager {
     await this.register(params.refid, params.name || "");
     this.objects[params.refid].state = "REGISTERED";
     this.objects[params.refid].state = "SYNCING";
-    const syncData = await this.sync(params.refid);
-    console.log("[syncdata]", syncData);
-    if (syncData) {
-      // @ts-ignore
-      _data.setRawValues(syncData);
+    try {
+      const syncData = await this.sync(params.refid);
+      console.log("[syncdata]", syncData);
+      if (syncData) {
+        // @ts-ignore
+        _data.setRawValues(syncData);
+      }
+    } catch (error) {
+      console.error("Could not initial sync.");
     }
+
     this.objects[params.refid].state = "SYNCED";
     await this.setupPatchListener(_data, params.onChange, params.refid);
     await this.setupSyncRequestReceiver(params.refid);
