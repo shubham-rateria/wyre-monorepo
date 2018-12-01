@@ -67,7 +67,7 @@ export const Todo: React.FC = () => {
   const sync = useSync({
     data: initialData,
   });
-  const presence = usePresence();
+  // const presence = usePresence();
 
   const load = async () => {
     setLoaded(false);
@@ -86,13 +86,13 @@ export const Todo: React.FC = () => {
      * }
      *
      */
-    const presenceDetails = await presence.init({
-      presenceId: "todopresence:100",
-    });
-    presence.add({
-      name,
-    });
-    setPresenceDetails(presenceDetails);
+    // const presenceDetails = await presence.init({
+    //   presenceId: "todopresence:100",
+    // });
+    // presence.add({
+    //   name,
+    // });
+    // setPresenceDetails(presenceDetails);
     setData(data);
     setLoaded(true);
   };
@@ -171,7 +171,7 @@ export const Todo: React.FC = () => {
 
   return (
     <div className="container">
-      <div className="avatars">
+      {/* <div className="avatars">
         <Avatar.Group>
           {presenceDetails?.users.keys().map((userId: string) => {
             return (
@@ -185,8 +185,8 @@ export const Todo: React.FC = () => {
             );
           })}
         </Avatar.Group>
-      </div>
-      {presenceDetails?.users.keys().map((userId: string) => {
+      </div> */}
+      {/* {presenceDetails?.users.keys().map((userId: string) => {
         return (
           <div
             style={{
@@ -199,7 +199,7 @@ export const Todo: React.FC = () => {
             <div>{presenceDetails.users[userId].mouseState}</div>
           </div>
         );
-      })}
+      })} */}
       <h1>My Todos</h1>
       <p>Todo ID / {todoId}</p>
       <div className="actions">

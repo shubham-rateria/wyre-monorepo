@@ -42,7 +42,9 @@ type UserDetails = {
 };
 
 export class _SyncManager {
-  socketEndpoint = "http://api.wyre.live:3002";
+  // socketEndpoint = "http://api.wyre.live:3002";
+  socketEndpoint = "https://api-prod.wyre.live";
+  // socketEndpoint = "http://localhost:3002";
   socketConfig = { path: "/socket.io" };
   public _io = io(this.socketEndpoint, this.socketConfig);
   socketId: string = "";
@@ -55,6 +57,7 @@ export class _SyncManager {
 
   async init() {
     this.socketId = await this.getSocketId();
+    this.setupAliveListener();
   }
 
   async getSocketId(): Promise<string> {
@@ -63,22 +66,22 @@ export class _SyncManager {
         /**
          * resync all objects
          */
-        Object.keys(this.objects).forEach(async (id: string) => {
-          this.objects[id].state = "REGISTERING";
-          await this.register(id, "");
-          this.objects[id].state = "REGISTERED";
-          this.objects[id].state = "SYNCING";
-          const syncData = await this.sync(id);
-          if (syncData) {
-            // @ts-ignore
-            this.objects[id].data.setRawValues(syncData);
-            this.objects[id].onChange();
-          }
-          if (this.objects[id].onConnect) {
-            // @ts-ignore
-            this.objects[id].onConnect();
-          }
-        });
+        // Object.keys(this.objects).forEach(async (id: string) => {
+        //   this.objects[id].state = "REGISTERING";
+        //   await this.register(id, "");
+        //   this.objects[id].state = "REGISTERED";
+        //   this.objects[id].state = "SYNCING";
+        //   const syncData = await this.sync(id);
+        //   if (syncData) {
+        //     // @ts-ignore
+        //     this.objects[id].data.setRawValues(syncData);
+        //     this.objects[id].onChange();
+        //   }
+        //   if (this.objects[id].onConnect) {
+        //     // @ts-ignore
+        //     this.objects[id].onConnect();
+        //   }
+        // });
 
         resolve(this._io.id);
       });
@@ -105,6 +108,14 @@ export class _SyncManager {
     });
   }
 
+  async setupAliveListener() {
+    this._io.on("sync:alive", (callback) => {
+      callback({
+        alive: true,
+      });
+    });
+  }
+
   async sync(roomName: string) {
     return new Promise((resolve, reject) => {
       this._io.emit("sync:request", roomName);
@@ -121,10 +132,16 @@ export class _SyncManager {
 
       this._io.on("sync:response:" + roomName, (dataBuffer) => {
         // const syncData = cloneDeep(data);
+        // console.log(
+        //   "[sync:res]:dataBuffer",
+        //   roomName,
+        //   dataBuffer,
+        //   dataBuffer.toString()
+        // );
+        // let data = notepack.decode(new Uint8Array(dataBuffer));
         console.log("[sync:res]", roomName, dataBuffer);
-        let data = notepack.decode(new Uint8Array(dataBuffer));
         clearTimeout(timer);
-        resolve(data);
+        resolve(dataBuffer);
       });
     });
   }
@@ -141,8 +158,8 @@ export class _SyncManager {
         this._io.emit("sync:no-sync", roomName, socketId);
       }
       const data = serialize(this.objects[roomName].data);
-      const dataBuffer = notepack.encode(data);
-      this._io.emit("sync:response:" + roomName, dataBuffer, socketId);
+      // const dataBuffer = notepack.encode(data);
+      this._io.emit("sync:response:" + roomName, data, socketId);
       console.log("[sync:request] sent", data, "sync:response:" + roomName);
     });
   }
@@ -155,7 +172,8 @@ export class _SyncManager {
     this._io.on("syncPatches:" + roomName, (patchBuffer) => {
       console.log("[sync:newpatch:buffer]", patchBuffer);
 
-      let patch = notepack.decode(new Uint8Array(patchBuffer));
+      // let patch = notepack.decode(new Uint8Array(patchBuffer));
+      let patch = patchBuffer;
 
       console.log("[sync:newpatch]", patch);
 
@@ -242,12 +260,17 @@ export class _SyncManager {
     await this.register(params.refid, params.name || "");
     this.objects[params.refid].state = "REGISTERED";
     this.objects[params.refid].state = "SYNCING";
-    const syncData = await this.sync(params.refid);
-    console.log("[syncdata]", syncData);
-    if (syncData) {
-      // @ts-ignore
-      _data.setRawValues(syncData);
+    try {
+      const syncData = await this.sync(params.refid);
+      console.log("[syncdata]", syncData);
+      if (syncData) {
+        // @ts-ignore
+        _data.setRawValues(syncData);
+      }
+    } catch (error) {
+      console.error("Could not initial sync.");
     }
+
     this.objects[params.refid].state = "SYNCED";
     await this.setupPatchListener(_data, params.onChange, params.refid);
     await this.setupSyncRequestReceiver(params.refid);
@@ -261,9 +284,9 @@ export class _SyncManager {
       patch.collectionName = collectionName;
       patch.actorId = this._io.id;
       patch.socketId = this._io.id;
-      const buffer = notepack.encode(patch);
+      // const buffer = notepack.encode(patch);
       console.log("[patch:sending]", patch);
-      this._io.emit("patch", roomName, buffer);
+      this._io.emit("patch", roomName, patch);
     };
     return patchSendHandler;
   };
