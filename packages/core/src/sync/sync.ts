@@ -44,6 +44,7 @@ type UserDetails = {
 export class _SyncManager {
   // socketEndpoint = "http://api.wyre.live:3002";
   socketEndpoint = "https://api-prod.wyre.live";
+  // socketEndpoint = "http://localhost:3002";
   socketConfig = { path: "/socket.io" };
   public _io = io(this.socketEndpoint, this.socketConfig);
   socketId: string = "";
@@ -56,6 +57,7 @@ export class _SyncManager {
 
   async init() {
     this.socketId = await this.getSocketId();
+    this.setupAliveListener();
   }
 
   async getSocketId(): Promise<string> {
@@ -102,6 +104,14 @@ export class _SyncManager {
       this._io.on("room:users:" + roomName, (usersInRoom) => {
         console.log("room:users:" + roomName, usersInRoom);
         resolve(usersInRoom);
+      });
+    });
+  }
+
+  async setupAliveListener() {
+    this._io.on("sync:alive", (callback) => {
+      callback({
+        alive: true,
       });
     });
   }
