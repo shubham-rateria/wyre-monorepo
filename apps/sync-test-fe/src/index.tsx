@@ -10,11 +10,12 @@ import { Dict } from "./Dict/Dict";
 import { Presence } from "./Presence/Presence";
 import { LiveComments } from "./LiveComments/LiveComments";
 import { TestGCL } from "./LiveComments/TestGCL";
+import { StreamerTest } from "./StreamerTest/StreamerTest";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
-root.render(<Todo />);
+root.render(<LiveComments />);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
