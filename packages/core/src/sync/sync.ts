@@ -14,6 +14,7 @@ interface RegisterParams {
   onLocalChange: () => void;
   name?: string;
   onConnect?: () => void;
+  onSyncError?: (message: string) => void;
 }
 
 interface DestroyParams {
@@ -275,6 +276,9 @@ export class _SyncManager {
       }
     } catch (error) {
       console.error("Could not initial sync.");
+      if (params.onSyncError) {
+        params.onSyncError("Could not initial sync:" + error);
+      }
     }
 
     this.objects[params.refid].state = "SYNCED";
