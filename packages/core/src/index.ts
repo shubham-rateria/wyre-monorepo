@@ -5,4 +5,4 @@ export * from "./observables/object/observable-object";
 export * from "./observables/array/observable-array";
 export * from "./lib/createWyre";
 
-export { SyncManager } from "./sync/sync";
+export { SyncManager, _SyncManager } from "./sync/sync";

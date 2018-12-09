@@ -9,7 +9,7 @@ type TComment = {
   dislikes: number;
 };
 
-const initialData = { chessObj: [] };
+const initialData = { todos: [] };
 
 export const TestGCL: React.FC = () => {
   const [data, setData] = useState<typeof initialData>(initialData);
@@ -22,7 +22,7 @@ export const TestGCL: React.FC = () => {
 
   const init = async () => {
     setLoading(true);
-    const data = await sync.init("testing:dynamic:import30");
+    const data = await sync.init("streamer:testing:2");
     setData(data);
     setLoading(false);
   };
@@ -37,10 +37,10 @@ export const TestGCL: React.FC = () => {
 
   return (
     <div>
-      {data.chessObj.map((details) => (
+      {data.todos.map((details) => (
         <div>
           {/* @ts-ignore */}
-          {details.fen}
+          {details}
         </div>
       ))}
     </div>

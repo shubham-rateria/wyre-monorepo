@@ -9,7 +9,8 @@ async function startStreamer() {
       console.log("received data");
     },
   });
-  const data = await sync.init("streamer:testing:2");
+  const data = await sync.init("syncKey1");
+  console.log("initial data", data.toJSON());
   // for (let i = 0; i < 1000; i++) {
   //   data.todos.push(i);
   //   console.log("[streaming]", i);

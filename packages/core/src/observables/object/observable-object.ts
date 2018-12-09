@@ -34,7 +34,7 @@ interface ObservableObjectParams {
    */
   onChange: (patch?: TPatch) => void;
 
-  onLocalChange: () => void;
+  onLocalChange?: () => void;
 }
 
 /**
@@ -534,7 +534,9 @@ export function ObservableObject({
         seq: event.timestamp.seq,
       };
       emitPatch(patch);
-      onLocalChange();
+      if (onLocalChange) {
+        onLocalChange();
+      }
     }
 
     if (event.type === "itemadded") {
@@ -546,7 +548,9 @@ export function ObservableObject({
         seq: event.timestamp.seq,
       };
       emitPatch(patch);
-      onLocalChange();
+      if (onLocalChange) {
+        onLocalChange();
+      }
     }
 
     if (event.type === "itemdeleted") {
@@ -558,7 +562,9 @@ export function ObservableObject({
         seq: event.timestamp.seq,
       };
       emitPatch(patch);
-      onLocalChange();
+      if (onLocalChange) {
+        onLocalChange();
+      }
     }
   }
 

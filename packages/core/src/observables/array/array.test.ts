@@ -729,3 +729,26 @@ describe("what happens when multiple users add at the same index", () => {
     // expect(actors[0][1]).toBe(actors[1][1]);
   });
 });
+
+describe("what happens when a patch is added for an existing index", () => {
+  test("[idempotency]", () => {
+    const patches: any[] = [];
+    const arr = new ObservableArray({
+      items: [],
+      onChange: () => {},
+      actorId: "a",
+      collectionName: "",
+      emitPatch: (patch) => {
+        patches.push(patch);
+      },
+    });
+    arr.push(1);
+    arr.applyPatch(patches[0]);
+    arr.applyPatch(patches[0]);
+    arr.applyPatch(patches[0]);
+    arr.applyPatch(patches[0]);
+    arr.applyPatch(patches[0]);
+    expect(arr[0]).toBe(1);
+    expect(arr.length).toBe(1);
+  });
+});
