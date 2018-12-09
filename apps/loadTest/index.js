@@ -94,7 +94,7 @@ const printReport = (con) => {
 };
 
 const setup = async () => {
-  const DB_NAME = "testMultiNode";
+  const DB_NAME = "testMultiNode1";
   const con = await createCon();
   try {
     await createDataBase(DB_NAME, con);
