@@ -11,6 +11,6 @@
   "author": "Rateria",
   "license": "ISC",
   "dependencies": {
-    "@wyre-client/core": "workspace:^0.4.22"
+    "@wyre-client/core": "workspace:*"
   }
 }
