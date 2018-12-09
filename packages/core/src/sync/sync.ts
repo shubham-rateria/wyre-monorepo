@@ -47,7 +47,7 @@ export class _SyncManager {
   // socketEndpoint = "http://api.wyre.live:3002";
   // socketEndpoint = "https://api-prod.wyre.live";
   socketEndpoint = "https://api-dev.wyre.live";
-  // socketEndpoint = "http://localhost:3002";
+  // socketEndpoint = "http://localhost:3003";
   // socketEndpoint = "http://3.109.46.246:3002";
   socketConfig = {
     path: "/socket.io",
@@ -66,7 +66,7 @@ export class _SyncManager {
   }
 
   async init() {
-    this.initialized = true;
+    this.initialized = false;
     this.socketId = await this.getSocketId();
     this.setupAliveListener();
     this.setupSyncReadyListener();
@@ -79,7 +79,7 @@ export class _SyncManager {
       console.log("disconnected...");
       this.wasPreviouslyDisconnected = true;
     });
-    this.initialized = false;
+    this.initialized = true;
   }
 
   async reSync() {
