@@ -12,7 +12,7 @@ importers:
 
   apps/consumer:
     specifiers:
-      '@wyre-client/core': workspace:^0.4.22
+      '@wyre-client/core': workspace:*
     dependencies:
       '@wyre-client/core': link:../../packages/core
 
@@ -30,7 +30,7 @@ importers:
 
   apps/streamer:
     specifiers:
-      '@wyre-client/core': workspace:^0.4.22
+      '@wyre-client/core': workspace:*
     dependencies:
       '@wyre-client/core': link:../../packages/core
 

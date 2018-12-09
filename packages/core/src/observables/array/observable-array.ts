@@ -47,7 +47,7 @@ interface ObservableArrayParams {
    */
   onChange: (patch?: TPatch) => void;
 
-  onLocalChange: () => void;
+  onLocalChange?: () => void;
 }
 
 export default function ObservableArray({
@@ -431,7 +431,9 @@ export default function ObservableArray({
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
       emitPatch(patch);
-      onLocalChange();
+      if (onLocalChange) {
+        onLocalChange();
+      }
     }
     if (event.type === "itemadded") {
       const patch: TPatch = {
@@ -444,7 +446,9 @@ export default function ObservableArray({
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
       emitPatch(patch);
-      onLocalChange();
+      if (onLocalChange) {
+        onLocalChange();
+      }
     }
     if (event.type === "itemdeleted") {
       const patch: TPatch = {
@@ -457,7 +461,9 @@ export default function ObservableArray({
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
       emitPatch(patch);
-      onLocalChange();
+      if (onLocalChange) {
+        onLocalChange();
+      }
     }
   }
 
