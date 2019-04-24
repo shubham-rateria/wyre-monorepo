@@ -1,3 +1,13 @@
+<br />
+<div align="center">
+  <a href="https://github.com/shubham-rateria/wyre-monorepo">
+  <picture >
+    <source media="(prefers-color-scheme: light)" srcset="https://docs.wyre.live/img/logo.png">
+    <img width='100' alt="wyre" src="https://docs.wyre.live/img/logo.png">
+  </picture>
+</a>
+</div>
+
 # Installation
 
 Let's install the Wyre library.
