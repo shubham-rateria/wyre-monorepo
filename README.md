@@ -8,27 +8,6 @@
 </a>
 </div>
 
-# Installation
-
-Let's install the Wyre library.
-
-## Instructions
-
-1. Tell npm about the private registry
-```bash
-npm config set @wyre-client:registry 'https://api.keygen.sh/v1/accounts/9fb6c504-8f2b-4497-9025-424775ea665d/artifacts/'
-```
-
-2. Use the activation code for access to the library
-```bash
-npm config set '//api.keygen.sh/v1/accounts/9fb6c504-8f2b-4497-9025-424775ea665d/artifacts/:_authToken' '{ACTIVATION_TOKEN}'
-```
-
-3. Install the library
-```bash
-npm install @wyre-client/core
-```
-
 ## `createWyre`
 
 The `createWyre` function is designed for synchronizing data between clients in real-time. 
