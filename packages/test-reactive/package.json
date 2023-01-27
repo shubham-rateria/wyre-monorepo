@@ -11,5 +11,6 @@
   },
   "keywords": [],
   "author": "Rateria",
-  "license": "ISC"
+  "license": "ISC",
+  "private": true
 }
