@@ -1,21 +1,11 @@
 import React from "react";
 import logo from "./logo.svg";
 import "./App.css";
-import { Sync } from "reactive";
-
-declare global {
-  interface Window {
-    sync: any;
-  }
-}
-
-let r = (Math.random() + 1).toString(36).substring(7);
+import { Sync } from "@sam98231/reactive";
 
 function useForceUpdate() {
-  const [value, setValue] = React.useState(0); // integer state
-  return () => setValue((value) => value + 1); // update state to force render
-  // A function that increment 👆🏻 the previous state like here
-  // is better than directly setting `setValue(value + 1)`
+  const [value, setValue] = React.useState(0);
+  return () => setValue((value) => value + 1);
 }
 
 const d = {
@@ -29,19 +19,17 @@ function App() {
   const forceUpdate = useForceUpdate();
 
   const changeVal = () => {
-    sync.value += 1;
-    sync.text += "hello\n";
+    data.value += 1;
     forceUpdate();
   };
 
-  const sync = React.useMemo(
+  const data = React.useMemo(
     () =>
-      Sync(d, "http://api.wyre.live:3002", { path: "/socket.io" }, () => {
+      Sync(d, () => {
         forceUpdate();
       }),
     []
   );
-  window.sync = sync;
 
   return (
     <div className="App">
@@ -58,10 +46,7 @@ function App() {
         >
           Learn React
         </a>
-        {/* {sync.arr.map((value: any) => (
-          <p>{value}</p>
-        ))} */}
-        {sync.text}
+        {data.value}
         <button onClick={changeVal}>Update</button>
       </header>
     </div>

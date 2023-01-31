@@ -1,5 +1,5 @@
 async function setup() {
-  const { Sync } = await import("reactive");
+  const { Sync } = await import("@sam98231/reactive");
 
   const obj = {
     refid: "some-random-refid-3",

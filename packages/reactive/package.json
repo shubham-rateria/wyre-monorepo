@@ -1,6 +1,6 @@
 {
-  "name": "reactive",
-  "version": "0.1.0",
+  "name": "@sam98231/reactive",
+  "version": "0.3.0",
   "description": "",
   "private": false,
   "source": "src/index.ts",
@@ -13,7 +13,8 @@
   "scripts": {
     "test": "jest",
     "build": "rimraf dist && rollup -c",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublish": "npm run build"
   },
   "keywords": [],
   "author": "Rateria",
