@@ -27,9 +27,7 @@ describe("testing observable objects", () => {
     const obs = new ObservableObject(obj, (patch: any) => {});
 
     for (let i = 0; i < 5; i++) {
-      console.log("[counter]before", obs.counter);
       obs.counter = obs.counter + 1;
-      console.log("[counter]after", obs.counter);
     }
 
     expect(obs.counter).toBe(5);
