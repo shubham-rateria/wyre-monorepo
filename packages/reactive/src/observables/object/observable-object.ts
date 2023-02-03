@@ -1,14 +1,17 @@
 import isArrayType from "../../helpers/isArrayType";
 import isPrimitiveType from "../../helpers/isPrimitiveType";
-import ObservableArray from "../array/observable-array";
-import { applyPatch } from "../../rfc6902";
 import { Timestamp, TimestampValue } from "../../lamport";
+import { TPatch } from "../../types/patch.type";
 import { TValue } from "../../types/value.type";
+import ObservableArray from "../array/observable-array";
+import { apply } from "./patch/patch";
+
+type TSimpleValue = number | string | null | undefined | object;
 
 type TEvent = {
   type: "itemchanged" | "itemadded";
   path: string;
-  value: string;
+  value: TSimpleValue;
   timestamp: TimestampValue;
 };
 
@@ -29,11 +32,25 @@ export default function ObservableObject(
     },
     _actorId = actorId;
 
-  function setKeyValueBySelf(key: string, value) {
+  function getValueToSet(key: string, value: TSimpleValue) {
+    const type = typeof value;
+    if (isPrimitiveType(type)) {
+      return value;
+    } else if (isArrayType(value)) {
+      return new ObservableArray(value, handleNonPrimitiveChildChange(key));
+    } else if (type === "object" && value !== null) {
+      return new ObservableObject(value, handleNonPrimitiveChildChange(key));
+    } else {
+      console.log(`We do not support ${type} yet.`);
+    }
+  }
+
+  function setKeyValueBySelf(key: string, value: TSimpleValue) {
+    const transformedValue = getValueToSet(key, value);
     if (key in _object) {
       _object[key].timestamp.increment();
       _object[key].timestamp.timestamp.actorId = _actorId;
-      _object[key].value = value;
+      _object[key].value = transformedValue;
       raiseEvent({
         path: "/" + key,
         type: "itemchanged",
@@ -46,9 +63,12 @@ export default function ObservableObject(
         isPrimitive: isPrimitiveType(value) || false,
         timestamp: timestamp,
         tombstone: false,
-        value,
+        value: transformedValue,
       };
       _object[key] = objValue;
+
+      defineKeyProperty(key);
+
       raiseEvent({
         path: "/" + key,
         value,
@@ -58,9 +78,39 @@ export default function ObservableObject(
     }
   }
 
+  function deleteKey(key: string) {
+    if (key in _object) {
+      _object[key].timestamp.increment();
+      _object[key].timestamp.timestamp.actorId = _actorId;
+      _object[key].tombstone = true;
+    }
+  }
+
+  Object.defineProperty(_self, "delete", {
+    enumerable: false,
+    writable: false,
+    configurable: false,
+    value: function (key: string) {
+      return deleteKey(key);
+    },
+  });
+
+  function getRawValue(key: string) {
+    return _object[key];
+  }
+
+  Object.defineProperty(_self, "getRawValue", {
+    enumerable: false,
+    writable: false,
+    configurable: false,
+    value: function (key: string) {
+      return getRawValue(key);
+    },
+  });
+
   function setKeyValueFromPatch(
     key: string,
-    value: any,
+    value: TSimpleValue,
     timestampValue: TimestampValue
   ) {
     /**
@@ -73,13 +123,29 @@ export default function ObservableObject(
      * provided timestamp
      */
 
+    /**
+     * add can have these situations
+     * 1. There is no key present with the specified key in operation
+     * Straightforward set key
+     *
+     * 2. There is a key present with the specified key in operation, for example
+     * when two users add the same key simultaneously. We can change the op to a replace
+     * op if this is the case and proceed.
+     *
+     * 3. There is a tombstone key present with the specified key in operation, for example
+     * when one user has removed the key while the other has changed some value for that
+     * key. In this case, we can compare timestamps, and if the received timestamp is
+     * greater, the object can be revived
+     */
+    const transformedValue = getValueToSet(key, value);
     const timestamp = new Timestamp(timestampValue.actorId, timestampValue.seq);
 
     if (key in _object) {
-      const value = _object[key];
-      if (timestamp.lessThan(value.timestamp)) {
+      const objectValue = _object[key];
+      if (timestamp.lessThan(objectValue.timestamp)) {
         _object[key].timestamp = timestamp;
-        _object[key].value = value;
+        _object[key].value = transformedValue;
+        _object[key].tombstone = false;
         _object[key].isPrimitive = isPrimitiveType(value) || false;
       }
     } else {
@@ -87,18 +153,32 @@ export default function ObservableObject(
         isPrimitive: isPrimitiveType(value) || false,
         timestamp: timestamp,
         tombstone: false,
-        value,
+        value: transformedValue,
       };
       _object[key] = objValue;
+      defineKeyProperty(key);
     }
   }
+
+  function hasKey(key) {
+    return key in _object;
+  }
+
+  Object.defineProperty(_self, "hasKey", {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function (key) {
+      return hasKey(key);
+    },
+  });
 
   function defineKeyProperty(key) {
     Object.defineProperty(_self, key, {
       configurable: true,
       enumerable: true,
       get: function () {
-        return _object[key].value;
+        return !_object[key]?.tombstone ? _object[key].value : undefined;
       },
       set: function (v) {
         setKeyValueBySelf(key, v);
@@ -110,11 +190,11 @@ export default function ObservableObject(
     configurable: false,
     enumerable: false,
     value: function (key) {
-      return _object[key];
+      return _object[key].value;
     },
   });
 
-  Object.defineProperty(_self, "setValueFromPatch", {
+  Object.defineProperty(_self, "setKeyValueFromPatch", {
     configurable: false,
     enumerable: false,
     value: function (key: string, value: any, timestampValue: TimestampValue) {
@@ -138,7 +218,7 @@ export default function ObservableObject(
     configurable: false,
     enumerable: false,
     writable: false,
-    value: function (patch) {
+    value: function (patch: TPatch) {
       /**
        * when applying a patch on a path,
        * we need to compare timestamps of that path,
@@ -150,7 +230,7 @@ export default function ObservableObject(
        * type with the same timestamp propagated
        */
 
-      applyPatch(_object, [patch]);
+      apply(_self, patch);
     },
   });
 
@@ -186,10 +266,6 @@ export default function ObservableObject(
     });
   }
 
-  //   function handleArrayChange(type, index, item) {
-  //     console.log("Array changed", type, index, item);
-  //   }
-
   function handleNonPrimitiveChildChange(childName) {
     return (patch) => {
       patch.path = `/${childName}${patch.path}`;
@@ -198,36 +274,16 @@ export default function ObservableObject(
   }
 
   Object.keys(object).forEach((key) => {
-    /**
-     * get type of value
-     * if it a primitive,
-     * assign as is,
-     * if it is an array,
-     * make it an observable array
-     */
-
-    const type = typeof object[key];
-
-    if (isPrimitiveType(type)) {
-      _object[key] = object[key];
-
-      // TODO: create empty timestamp
-
-      defineKeyProperty(key);
-    } else if (isArrayType(object[key])) {
-      _object[key] = new ObservableArray(
-        object[key],
-        handleNonPrimitiveChildChange(key)
-      );
-      defineKeyProperty(key);
-    } else if (type === "object" && object[key] !== null) {
-      _object[key] = new ObservableObject(
-        object[key],
-        handleNonPrimitiveChildChange(key)
-      );
-      defineKeyProperty(key);
-    } else {
-      console.log(`We do not support ${type} yet.`);
-    }
+    const transformedValue:
+      | TSimpleValue
+      | typeof ObservableArray
+      | typeof ObservableObject = getValueToSet(key, object[key]);
+    _object[key] = {
+      isPrimitive: isPrimitiveType(object[key]) || false,
+      timestamp: new Timestamp(_actorId),
+      tombstone: false,
+      value: transformedValue,
+    };
+    defineKeyProperty(key);
   });
 }

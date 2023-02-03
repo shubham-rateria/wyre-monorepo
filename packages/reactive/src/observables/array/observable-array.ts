@@ -495,6 +495,6 @@ export default function ObservableArray(items, onChange, actorId = "") {
       defineIndexProperty(i);
     }
 
-    console.log(_array);
+    // console.log(_array);
   }
 }
