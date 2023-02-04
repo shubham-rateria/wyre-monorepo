@@ -17,6 +17,9 @@ export class Timestamp {
     if (this.timestamp.seq < timestamp.timestamp.seq) {
       return true;
     } else if (this.timestamp.seq === timestamp.timestamp.seq) {
+      if (timestamp.timestamp.actorId === "") {
+        return true;
+      }
       return this.timestamp.actorId < timestamp.timestamp.actorId;
     }
   }

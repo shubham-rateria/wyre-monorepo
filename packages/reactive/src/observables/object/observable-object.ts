@@ -9,9 +9,9 @@ import { apply } from "./patch/patch";
 type TSimpleValue = number | string | null | undefined | object;
 
 type TEvent = {
-  type: "itemchanged" | "itemadded";
+  type: "itemchanged" | "itemadded" | "itemdeleted";
   path: string;
-  value: TSimpleValue;
+  value?: TSimpleValue;
   timestamp: TimestampValue;
 };
 
@@ -91,7 +91,12 @@ export default function ObservableObject(
     writable: false,
     configurable: false,
     value: function (key: string) {
-      return deleteKey(key);
+      deleteKey(key);
+      raiseEvent({
+        type: "itemdeleted",
+        path: "/" + key,
+        timestamp: _object[key].timestamp.timestamp,
+      });
     },
   });
 
@@ -159,6 +164,38 @@ export default function ObservableObject(
       defineKeyProperty(key);
     }
   }
+
+  function deleteKeyFromPatch(key: string, timestamp: Timestamp) {
+    /**
+     * we assume that message ordering will be
+     * maintained, thus if a user adds a key then deletes is,
+     * the add patch will reach me before the delete,
+     * therefore a key SHOULD ALWAYS be present if a delete on the same
+     * is done.
+     *
+     * what happens when two users delete the same object at the same time?
+     * compare timestamps, and whichever is lower, apply that to the object
+     */
+
+    const value = _object[key];
+    if (timestamp.lessThan(value.timestamp)) {
+      _object[key].tombstone = true;
+      _object[key].timestamp = timestamp;
+    }
+  }
+
+  Object.defineProperty(_self, "deleteKeyFromPatch", {
+    enumerable: false,
+    writable: false,
+    configurable: false,
+    value: function (key: string, timestampValue: TimestampValue) {
+      const timestamp = new Timestamp(
+        timestampValue.actorId,
+        timestampValue.seq
+      );
+      deleteKeyFromPatch(key, timestamp);
+    },
+  });
 
   function hasKey(key) {
     return key in _object;
@@ -261,7 +298,7 @@ export default function ObservableObject(
       onChange(patch);
     }
 
-    _handlers[event.type].forEach(function (h) {
+    _handlers[event.type]?.forEach(function (h) {
       h.call(_self, event);
     });
   }
