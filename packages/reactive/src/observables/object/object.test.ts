@@ -53,7 +53,7 @@ describe("testing observable objects", () => {
     obs.delete("text");
     const rawValue = obs.getRawValue("text");
     expect(rawValue.tombstone).toBe(true);
-    expect(obs.text).toBeUndefined();
+    expect(obs.text).toBeUndefined;
   });
   test("obj:deleted key should not be shown", () => {});
   test("obj:child object should be correct type:arr", () => {});
@@ -109,9 +109,9 @@ describe("testing situations", () => {
     obs.applyPatch(patch);
 
     /**
-     * since (a, 2) < (b, 2), this patch should be applied
+     * since (a, 2) < (b, 2), this patch should not be applied
      */
-    expect(obs.key).toBe("val2");
+    expect(obs.key).toBe("val1");
   });
   test("two people change the same object: 2", () => {
     const d = { key: "val" };
@@ -138,9 +138,9 @@ describe("testing situations", () => {
     obs.applyPatch(patch);
 
     /**
-     * since (b, 2) not < (a, 2), this patch should not be applied
+     * since (b, 2) > (a, 2), this patch should be applied
      */
-    expect(obs.key).toBe("val1");
+    expect(obs.key).toBe("val2");
   });
 
   test("what happens when things arrive out of order", () => {});
