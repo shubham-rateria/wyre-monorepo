@@ -20,14 +20,78 @@ function unescape(token: string): string {
   return token.replace(/~1/g, "/").replace(/~0/g, "~");
 }
 
-function getTokens(path: string) {
+export function getTokens(path: string) {
   const tokens = path
     .split("/")
     .map(unescape)
     .filter((val) => val !== "");
   //   if (tokens[0] !== "") throw new Error(`Invalid JSON Pointer: ${path}`);
-  console.log("[getTokens]:getting tokens", tokens);
   return tokens;
+}
+
+export function convertIndexedToCrdtPath(
+  object: typeof ObservableArray,
+  patch: TPatch
+) {
+  let modPath = "";
+  let parent: any = null;
+  let value = object;
+  const tokens = getTokens(patch.path);
+
+  for (const token of tokens) {
+    console.log("[convertIndexToCrdtPath]:value", value);
+    parent = value;
+
+    if (parent instanceof ObservableArray) {
+      /**
+       * If parent is an observable array and key is not crdt key
+       * then it has to be converted to crdt key
+       */
+      if (!Key.isCrdtKey(token)) {
+        console.log(
+          "[convertIndexToCrdtPath]:is not crdt",
+          token,
+          parent[parseInt(token)]
+        );
+        // @ts-ignore
+        const key = parent.getRawValue(token).key.toString();
+        modPath += "/" + key;
+        value = parent[parseInt(token)];
+        continue;
+      }
+      /**
+       * Find the index
+       */
+      let index: number;
+
+      if (patch.op === "replace") {
+        // @ts-ignore
+        index = value.findIndex(token);
+        console.log("[non crdt key]", index, token);
+        if (!index) {
+          throw new Error("could not find index" + token);
+        }
+      } else {
+        // @ts-ignore
+        index = value.getIndexFromCrdtKey(token);
+      }
+
+      modPath += "/" + token;
+
+      /**
+       * in case of adding to the end,
+       * the parent[index] will be undefined
+       */
+      if (parent[index]) {
+        value = parent[index].value;
+      }
+    } else {
+      modPath += "/" + token;
+      value = parent[token];
+    }
+  }
+
+  return modPath;
 }
 
 export function convertPathToIndexed(
@@ -57,7 +121,6 @@ export function convertPathToIndexed(
 
   let modPath = "";
   let parent: any = null;
-  let key = "";
   let value = object;
   const tokens = getTokens(patch.path);
 
@@ -70,7 +133,7 @@ export function convertPathToIndexed(
       console.log("[convertPathToIndex]:is not crdt", token);
       modPath += "/" + token;
       parent = value;
-      value = parent[key];
+      value = parent[token];
       continue;
     }
     /**
@@ -83,7 +146,7 @@ export function convertPathToIndexed(
       // @ts-ignore
       index = value.findIndex(token);
       console.log("[non crdt key]", index, token);
-      if (!index) {
+      if (index === -1) {
         throw new Error("could not find index" + token);
       }
     } else {
