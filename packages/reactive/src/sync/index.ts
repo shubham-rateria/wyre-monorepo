@@ -43,14 +43,17 @@ export function Sync(obj, onChange, actorId = "") {
 
   async function sync() {
     return new Promise((resolve, reject) => {
-      _io.emit("sync:request:" + _data.refid);
+      _io.emit("sync:request", _data.refid);
+      console.log("[sync:req:sent]", _data.refid);
 
       const timer = setTimeout(() => {
         reject(new Error(`Promise timed out after ${10000} ms`));
       }, 10000);
 
-      _io.on("sync:response:" + _data.refid, (data) => {
+      _io.on("sync:response", (data) => {
+        console.log("[sync:res]", _data.refid, data);
         clearTimeout(timer);
+        _data.setRawValues(data);
         resolve(data);
       });
     });
@@ -84,20 +87,17 @@ export function Sync(obj, onChange, actorId = "") {
      * TODO: wait for self registration to finish before a sync:request can be processed
      */
 
-    _io.on("sync:request:" + _data.refid, () => {
+    _io.on("sync:request:" + _data.refid, (socketId: string) => {
+      console.log("[sync:request] received", _data.refid);
       const data = serializeObject(_data);
-      _io.emit("sync:response:" + _data.refid, data);
+      _io.emit("sync:response:" + _data.refid, data, socketId);
+      console.log("[sync:request] sent", data, "sync:response:" + _data.refid);
     });
 
     outputBuffer = [];
   }
 
   function add(data) {
-    if (!(data.refid in lamports)) {
-      lamports[data.refid] = new Lamport();
-    }
-    lamports[data.refid].increment(data.path);
-    data.lamportTimestamp = lamports[data.refid].get(data.path);
     _io.emit("patch", data);
   }
 
@@ -118,5 +118,5 @@ export function Sync(obj, onChange, actorId = "") {
 
   init();
 
-  return { data: _data, add, lamports, io: _io };
+  return { data: _data, add, lamports, io: _io, sync };
 }
