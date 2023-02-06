@@ -82,6 +82,10 @@ export default function ObservableArray(items, onChange, actorId = "") {
     for (let i = 0; i < values.length; i++) {
       const item = values[i];
       const key = new Key(item.key.fractionalId.toString());
+      const timestamp = new Timestamp(
+        item.timestamp.timestamp.actorId,
+        item.timestamp.timestamp.seq
+      );
       if (
         typeof item.value === "object" &&
         !Array.isArray(item.value) &&
@@ -102,6 +106,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
         newItem.setRawValues(item.value);
         item.value = newItem;
       }
+      item.timestamp = timestamp;
       _array.push(item);
       defineIndexProperty(i);
       defineIndexProperty(key.toString());
