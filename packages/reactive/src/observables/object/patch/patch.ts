@@ -40,10 +40,11 @@ export function evaluate(object: any, path: string): PointerEvaluation {
       continue;
     }
     // not sure if this the best way to handle non-existant paths...
-    // if (parent) {
-    //   value = parent.getValueForPointer(key);
-    // }
-    value = (parent || {})[key];
+    if (parent) {
+      value = parent[key];
+    }
+    // value = (parent || {})[key];
+    console.log("[obj:evaluate]", parent, key, value);
   }
 
   return { parent, key, value };
@@ -64,7 +65,13 @@ function add(object: any, operation: TPatch) {
   );
 }
 
-function remove(object: typeof ObservableObject, operation: TPatch) {}
+function remove(object: typeof ObservableObject, operation: TPatch) {
+  const timestamp = new Timestamp(operation.actorId, operation.seq);
+  const pointer = evaluate(object, operation.path);
+
+  // @ts-ignore
+  object.deleteKeyFromPatch(pointer.key, timestamp);
+}
 
 function replace(object: typeof ObservableObject, operation: TPatch) {
   const pointer = evaluate(object, operation.path);
