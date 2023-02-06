@@ -20,7 +20,8 @@
   "author": "Rateria",
   "license": "ISC",
   "dependencies": {
-    "socket.io-client": "4.1.3"
+    "socket.io-client": "4.1.3",
+    "tslib": "^2.5.0"
   },
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.0",
