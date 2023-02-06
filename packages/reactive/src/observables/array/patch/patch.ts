@@ -188,6 +188,8 @@ export function evaluate(object: any, path: string): PointerEvaluation {
     }
     // not sure if this the best way to handle non-existant paths...
     value = (parent || {})[key];
+
+    console.log("[eval]", typeof parent, parent, typeof value, value);
   }
 
   return { parent, key, value };
@@ -201,13 +203,19 @@ function add(object: typeof ObservableArray, operation: TPatch) {
   // @ts-ignore
   const timestamp = new Timestamp(operation.actorId, operation.seq);
   // @ts-ignore
-  object.setValueFromPatch(pointer.key, operation.value, timestamp.timestamp);
+  object.addNewValueFromPatch(
+    pointer.key,
+    operation.value,
+    timestamp.timestamp
+  );
 }
 
 function remove(object: typeof ObservableArray, operation: TPatch) {}
 
 function replace(object: typeof ObservableArray, operation: TPatch) {
   const pointer = evaluate(object, operation.path);
+
+  console.log("[patch:replacing]", pointer, object, operation);
 
   // @ts-ignore
   const timestamp = new Timestamp(operation.actorId, operation.seq);
@@ -223,9 +231,9 @@ export function apply(
   //   {add, remove, replace, move, copy, test}[operation.op](object, operation)
   // (seems like a bug)
 
-  const indexedPath = convertPathToIndexed(object, operation);
-  console.log("[indexedPath]", indexedPath);
-  const { parent, value, key } = evaluate(object, indexedPath);
+  //   const indexedPath = convertPathToIndexed(object, operation);
+  //   console.log("[indexedPath]", indexedPath);
+  const { parent, value, key } = evaluate(object, operation.path);
   const patch: TPatch = operation;
   patch.path = `/${key}`;
 
