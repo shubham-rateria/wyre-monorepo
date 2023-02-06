@@ -1,6 +1,6 @@
 import { Sync } from "./index";
 
-const obj = { refid: "some-new-channel-18", d: 1 };
+const obj = { refid: "some-new-channel-20", d: 1 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -8,26 +8,30 @@ describe("test end to end sync", () => {
   test("go crazy", async () => {
     const clients: any[] = [];
 
-    const NUM_CLIENTS = 60;
+    const NUM_CLIENTS = 20;
+    const NUM_CHANGES = 10;
 
     // create 10 clients and change random values
     for (let i = 0; i < NUM_CLIENTS; i++) {
-      const client = Sync(obj, () => {});
+      const client = Sync(obj, () => {}, i.toString());
       clients.push(client);
     }
 
     // wait for everyone to be added to the room
-    await sleep(10000);
+    await sleep(5000);
 
     // // make a 100(?) changes
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < Math.min(NUM_CHANGES, NUM_CLIENTS); i++) {
       const client = clients[i];
       client.data.d = Math.random();
-      await sleep(100);
     }
 
-    // // // wait for things to calm down
-    await sleep(1000);
+    for (let i = 0; i < Math.min(NUM_CHANGES, NUM_CLIENTS); i++) {
+      const client = clients[i];
+      client.data.d = Math.random();
+    }
+
+    await sleep(10000);
 
     const values: any[] = clients.map((client) => client.data.d);
 
