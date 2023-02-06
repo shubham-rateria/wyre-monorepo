@@ -5,6 +5,11 @@ import { TPatch } from "../../types/patch.type";
 import { TValue } from "../../types/value.type";
 import ObservableArray from "../array/observable-array";
 import { apply } from "./patch/patch";
+import { ArrayValue } from "../array/observable-array";
+import {
+  ArraySerializedValue,
+  ObjectSerializedValue,
+} from "../utils/serialize";
 
 type TSimpleValue = number | string | null | undefined | object;
 
@@ -94,6 +99,52 @@ export default function ObservableObject(
         path: "/" + key,
         timestamp: _object[key].timestamp.timestamp,
       });
+    },
+  });
+
+  function setRawValues(obj: {
+    [key: string]: ObjectSerializedValue | ArraySerializedValue;
+  }) {
+    /**
+     * Iterate over the keys and check values
+     */
+    Object.keys(obj).forEach((key: string) => {
+      const item = obj[key];
+      if (Array.isArray(item.value)) {
+        const arr = new ObservableArray(
+          [],
+          handleNonPrimitiveChildChange(key),
+          _actorId
+        );
+        arr.setRawValues(item.value);
+        item.value = arr;
+      } else if (
+        typeof item.value === "object" &&
+        !Array.isArray(item.value) &&
+        item.value !== null &&
+        !item.isSerialized
+      ) {
+        const obj = new ObservableObject(
+          {},
+          handleNonPrimitiveChildChange(key),
+          _actorId
+        );
+        obj.setRawValues(item.value);
+        item.value = obj;
+      }
+      _object[key] = item;
+      defineKeyProperty(key);
+    });
+  }
+
+  Object.defineProperty(_self, "setRawValues", {
+    enumerable: false,
+    writable: false,
+    configurable: false,
+    value: function (obj: {
+      [key: string]: ObjectSerializedValue | ArraySerializedValue;
+    }) {
+      setRawValues(obj);
     },
   });
 
@@ -272,6 +323,15 @@ export default function ObservableObject(
        */
 
       apply(_self, patch);
+    },
+  });
+
+  Object.defineProperty(_self, "keys", {
+    enumerable: false,
+    writable: false,
+    configurable: false,
+    value: function () {
+      return Object.keys(_object);
     },
   });
 
