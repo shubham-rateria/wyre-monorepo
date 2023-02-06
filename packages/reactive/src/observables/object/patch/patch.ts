@@ -22,7 +22,6 @@ function unescape(token: string): string {
 function getTokens(path: string) {
   const tokens = path.split("/").map(unescape);
   if (tokens[0] !== "") throw new Error(`Invalid JSON Pointer: ${path}`);
-  console.log("[getTokens]:getting tokens", tokens);
   return tokens;
 }
 
@@ -44,7 +43,6 @@ export function evaluate(object: any, path: string): PointerEvaluation {
       value = parent[key];
     }
     // value = (parent || {})[key];
-    console.log("[obj:evaluate]", parent, key, value);
   }
 
   return { parent, key, value };
@@ -97,8 +95,6 @@ export function apply(
   const { parent, value, key } = evaluate(object, operation.path);
   const patch: TPatch = operation;
   patch.path = `/${key}`;
-
-  console.log("[apply]", typeof parent, patch);
 
   if (parent instanceof ObservableObject) {
     switch (patch.op) {
