@@ -1,6 +1,9 @@
 import { Pointer } from "./pointer";
 import { clone } from "./util";
-import ObservableArray from "../observables/observable-array";
+import ObservableArray from "../observables/array/observable-array";
+
+// TODO: check if parent / element is observable object and apply patch for it
+
 import {
   AddOperation,
   RemoveOperation,
@@ -141,6 +144,8 @@ export function replace(
     if (parseInt(endpoint.key, 10) >= endpoint.parent.length) {
       return new MissingError(operation.path);
     }
+    endpoint.parent[endpoint.key] = operation.value;
+    return null;
   } else if (endpoint.value === undefined) {
     return new MissingError(operation.path);
   }
