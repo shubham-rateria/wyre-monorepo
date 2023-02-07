@@ -4,12 +4,11 @@ import { Timestamp, TimestampValue } from "../../lamport";
 import { TPatch } from "../../types/patch.type";
 import { TValue } from "../../types/value.type";
 import ObservableArray from "../array/observable-array";
-import { apply } from "./patch/patch";
-import { ArrayValue } from "../array/observable-array";
 import {
   ArraySerializedValue,
   ObjectSerializedValue,
 } from "../utils/serialize";
+import { apply } from "./patch/patch";
 
 type TSimpleValue = number | string | null | undefined | object;
 
