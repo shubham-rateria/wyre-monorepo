@@ -1,5 +1,5 @@
 import { applyPatch } from "../../rfc6902";
-import ObservableObject from "../object/observable-object";
+import { ObservableObject } from "../object/observable-object";
 import { Key } from "./key/key";
 import { Timestamp, TimestampValue } from "../../lamport/index";
 import isPrimitiveType from "../../helpers/isPrimitiveType";
@@ -156,10 +156,8 @@ export default function ObservableArray(items, onChange, actorId = "") {
       index = _self.findIndex(index);
 
       const rawValue = _array[index];
-      console.log("[settingvaluefromtpatch]", index, timestamp, rawValue);
 
       if (rawValue.timestamp.lessThan(timestamp)) {
-        console.log("[settingvaluefrompatch]", index, value);
         _array[index].value = value;
         _array[index].timestamp = timestamp;
       }
@@ -171,7 +169,10 @@ export default function ObservableArray(items, onChange, actorId = "") {
     configurable: false,
     writable: false,
     value: function (
-      index: number | string,
+      /**
+       * Index is a crdt index
+       */
+      index: string,
       value: any,
       timestampValue: TimestampValue
     ) {
@@ -192,7 +193,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
         timestampValue.seq
       );
 
-      if (index in _array) {
+      if (_self.findIndex(index) !== -1) {
         const rawValue = _array[index];
         console.log("[settingvaluefromtpatch]", index, timestamp, rawValue);
 
@@ -206,20 +207,38 @@ export default function ObservableArray(items, onChange, actorId = "") {
           value: value,
           timestamp: timestamp,
           isPrimitive: isPrimitiveType(value) || false,
-          key: new Key(index.toString()),
+          key: Key.fromString(index),
           tombstone: false,
         };
 
         /**
-         * Set the value and index property.
-         * Sort the array
+         * Find index to insert into.
+         * Move the other elements by 1
          */
 
         const key = index;
-        index = _self.findIndex(key);
-        _array[index] = rawValue;
+        const insertIndex: number = _self.getIndexFromCrdtKey(key);
+
+        console.log(
+          "[settingnewvaluefrompatch]",
+          index,
+          rawValue,
+          insertIndex,
+          key
+        );
+
+        if (insertIndex >= _array.length) {
+          _array[insertIndex] = rawValue;
+        } else {
+          /**
+           * Move all elements after index
+           */
+          const spliced = _array.splice(insertIndex, _array.length);
+          _array.push(rawValue);
+          _array.concat(spliced);
+        }
         defineIndexProperty(index);
-        defineIndexProperty(index);
+        defineIndexProperty(insertIndex);
       }
     },
   });
@@ -313,34 +332,38 @@ export default function ObservableArray(items, onChange, actorId = "") {
     },
   });
 
+  function findIndexToInsert(key: Key | string): number {
+    /**
+     * We need to find an index where this key
+     * is > previousKey and < nextKey.
+     * Since we assume that the _array is sorted with
+     * key, we can find only index where key becomes > nextKey
+     * and set that index
+     */
+
+    if (_array.length === 0) {
+      return 0;
+    }
+
+    let index = 0;
+    const compareKey = key instanceof Key ? key : Key.fromString(key);
+
+    for (let i = 0; i < _array.length; i++) {
+      const key = _array[i].key;
+      if (key.lessThan(compareKey)) {
+        index = i;
+      }
+    }
+
+    return index + 1;
+  }
+
   Object.defineProperty(_self, "getIndexFromCrdtKey", {
     configurable: false,
     enumerable: false,
     writable: false,
     value: function (key: string) {
-      /**
-       * We need to find an index where this key
-       * is > previousKey and < nextKey.
-       * Since we assume that the _array is sorted with
-       * key, we can find only index where key becomes > nextKey
-       * and set that index
-       */
-
-      if (_array.length === 0) {
-        return 0;
-      }
-
-      let index = 0;
-      const compareKey = Key.fromString(key);
-
-      for (let i = 0; i < _array.length; i++) {
-        const key = _array[i].key;
-        if (key.lessThan(compareKey)) {
-          index = i;
-        }
-      }
-
-      return index + 1;
+      return findIndexToInsert(key);
     },
   });
 
