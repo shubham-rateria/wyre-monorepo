@@ -1,6 +1,6 @@
 import io from "socket.io-client";
 import Lamport from "../lamport";
-import ObservableObject from "../observables/object/observable-object";
+import { ObservableObject } from "../observables/object/observable-object";
 import { serializeObject } from "../observables/utils/serialize";
 
 /**
@@ -106,13 +106,6 @@ export function Sync(obj, onChange, actorId = "") {
   }
 
   function _onChange(patch) {
-    patch.refid = _data.refid;
-    // increment the lamport timestamp
-    if (!(patch.refid in lamports)) {
-      lamports[patch.refid] = new Lamport();
-    }
-    lamports[patch.refid].increment(patch.path);
-    console.log("[change]", patch);
     add(patch);
   }
 

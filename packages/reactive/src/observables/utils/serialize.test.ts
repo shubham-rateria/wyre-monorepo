@@ -1,4 +1,4 @@
-import ObservableObject from "../object/observable-object";
+import { ObservableObject } from "../object/observable-object";
 import { serializeObject } from "./serialize";
 
 describe("serialize", () => {

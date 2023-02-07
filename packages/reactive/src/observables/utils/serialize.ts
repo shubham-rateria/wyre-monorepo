@@ -1,5 +1,5 @@
 import { TValue } from "../../types/value.type";
-import ObservableObject from "../object/observable-object";
+import { ObservableObject } from "../object/observable-object";
 import ObservableArray, { ArrayValue } from "../array/observable-array";
 /**
  * This function will create a serialized

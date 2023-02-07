@@ -1,4 +1,4 @@
-import ObservableObject from "../observables/object/observable-object";
+import { ObservableObject } from "../observables/object/observable-object";
 import { Sync } from "./index";
 
 const obj = { refid: "some-new-channel-20", d: 1 };

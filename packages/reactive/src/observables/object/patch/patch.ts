@@ -1,6 +1,6 @@
 import { Timestamp } from "./../../../lamport/index";
 import { TPatch } from "../../../types/patch.type";
-import ObservableObject from "../observable-object";
+import { ObservableObject } from "../observable-object";
 
 export class InvalidOperationError extends Error {
   constructor(public operation: TPatch) {
