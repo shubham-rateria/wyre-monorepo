@@ -219,14 +219,6 @@ export default function ObservableArray(items, onChange, actorId = "") {
         const key = index;
         const insertIndex: number = _self.getIndexFromCrdtKey(key);
 
-        console.log(
-          "[settingnewvaluefrompatch]",
-          index,
-          rawValue,
-          insertIndex,
-          key
-        );
-
         if (insertIndex >= _array.length) {
           _array[insertIndex] = rawValue;
         } else {
