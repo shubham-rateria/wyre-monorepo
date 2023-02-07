@@ -15,8 +15,13 @@ export interface ObjectSerializedValue extends TValue {
   isSerialized: boolean;
 }
 
+/**
+ * Serializes array value
+ * @param arr array to serialize
+ * @returns {ArraySerializedValue[]} serialized array value
+ */
 export function serializeArray(arr: typeof ObservableArray) {
-  const serializedValue: any[] = [];
+  const serializedValue: ArraySerializedValue[] = [];
   // @ts-ignore
   for (let i = 0; i < arr.length; i++) {
     // @ts-ignore
