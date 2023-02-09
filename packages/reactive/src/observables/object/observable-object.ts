@@ -1,3 +1,4 @@
+import { cloneDeep } from "lodash";
 import isArrayType from "../../helpers/isArrayType";
 import isPrimitiveType from "../../helpers/isPrimitiveType";
 import { Timestamp, TimestampValue } from "../../lamport";
@@ -100,11 +101,12 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
   function setRawValues(obj: {
     [key: string]: ObjectSerializedValue | ArraySerializedValue;
   }) {
+    const serializedObject = cloneDeep(obj);
     /**
      * Iterate over the keys and check values
      */
-    Object.keys(obj).forEach((key: string) => {
-      const item = obj[key];
+    Object.keys(serializedObject).forEach((key: string) => {
+      const item = serializedObject[key];
       const timestamp = new Timestamp(
         item.timestamp.timestamp.actorId,
         item.timestamp.timestamp.seq
@@ -211,6 +213,14 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
       _object[key] = objValue;
       defineKeyProperty(key);
     }
+
+    console.log(
+      "[patch:object:setkeyvaluefrompatch]",
+      _object[key],
+      key,
+      value,
+      timestampValue
+    );
   }
 
   function deleteKeyFromPatch(key: string, timestamp: Timestamp) {
@@ -331,6 +341,7 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
     writable: false,
     configurable: false,
     value: function () {
+      // TODO: ignore dead values
       return Object.keys(_object);
     },
   });

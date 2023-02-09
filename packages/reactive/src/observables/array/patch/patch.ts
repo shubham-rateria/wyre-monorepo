@@ -39,7 +39,6 @@ export function convertIndexedToCrdtPath(
   const tokens = getTokens(patch.path);
 
   for (const token of tokens) {
-    console.log("[convertIndexToCrdtPath]:value", value);
     parent = value;
 
     if (parent instanceof ObservableArray) {
@@ -48,11 +47,6 @@ export function convertIndexedToCrdtPath(
        * then it has to be converted to crdt key
        */
       if (!Key.isCrdtKey(token)) {
-        console.log(
-          "[convertIndexToCrdtPath]:is not crdt",
-          token,
-          parent[parseInt(token)]
-        );
         // @ts-ignore
         const key = parent.getRawValue(token).key.toString();
         modPath += "/" + key;
@@ -67,7 +61,6 @@ export function convertIndexedToCrdtPath(
       if (patch.op === "replace") {
         // @ts-ignore
         index = value.findIndex(token);
-        console.log("[non crdt key]", index, token);
         if (!index) {
           throw new Error("could not find index" + token);
         }
@@ -210,7 +203,20 @@ function add(object: typeof ObservableArray, operation: TPatch) {
   );
 }
 
-function remove(object: typeof ObservableArray, operation: TPatch) {}
+function remove(object: typeof ObservableArray, operation: TPatch) {
+  const pointer = evaluate(object, operation.path);
+
+  console.log("[patch:deleting]", pointer, object, operation);
+
+  // @ts-ignore
+  const timestamp = new Timestamp(operation.actorId, operation.seq);
+  // @ts-ignore
+  object.deleteValueFromPatch(
+    pointer.key,
+    operation.value,
+    timestamp.timestamp
+  );
+}
 
 function replace(object: typeof ObservableArray, operation: TPatch) {
   const pointer = evaluate(object, operation.path);
@@ -231,8 +237,6 @@ export function apply(
   //   {add, remove, replace, move, copy, test}[operation.op](object, operation)
   // (seems like a bug)
 
-  //   const indexedPath = convertPathToIndexed(object, operation);
-  //   console.log("[indexedPath]", indexedPath);
   const { parent, value, key } = evaluate(object, operation.path);
   const patch: TPatch = operation;
   patch.path = `/${key}`;

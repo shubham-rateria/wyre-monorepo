@@ -105,6 +105,34 @@ describe("test end to end sync", () => {
 // });
 
 describe("test sync manager", () => {
+  test("todo:scenario:1", async () => {
+    const sync1 = new _SyncManager();
+    // const sync2 = new _SyncManager();
+    const sync3 = new _SyncManager();
+
+    await sync1.init();
+    // await sync2.init();
+    await sync3.init();
+
+    const data = {
+      todos: [],
+    };
+
+    const refid = "a-random-refid:1";
+
+    const data1 = await sync1.create({
+      data,
+      collectionName: "TestCollection",
+      refid,
+      onChange() {},
+    });
+
+    // @ts-ignore
+    data1.todos.push({
+      text: "A New Todo",
+      done: false,
+    });
+  });
   test("1", async () => {
     const sync1 = new _SyncManager();
     // const sync2 = new _SyncManager();
@@ -113,7 +141,11 @@ describe("test sync manager", () => {
     // await sync2.init();
     await sync3.init();
 
-    const data = { counter: 1, refid: "a-random-refid-130" };
+    const data = {
+      todos: [{ text: "some text", done: false }],
+      counter: 1,
+      refid: "a-random-refid-131",
+    };
 
     const data1 = await sync1.create({
       data,
@@ -129,7 +161,7 @@ describe("test sync manager", () => {
     // });
 
     // @ts-ignore
-    data1.counter++;
+    data1.counter = 10;
     // @ts-ignore
     // data2.counter++;
 

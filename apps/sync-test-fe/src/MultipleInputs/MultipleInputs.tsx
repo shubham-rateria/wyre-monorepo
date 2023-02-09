@@ -1,7 +1,7 @@
 import React from "react";
 import logo from "./logo.svg";
 import "./App.css";
-import { Sync } from "@sam98231/reactive";
+import { Sync, _SyncManager } from "@sam98231/reactive";
 import {
   Col,
   Row,
@@ -15,28 +15,23 @@ import {
   Input,
   Form,
 } from "antd";
-import Card from "./components/Card";
+import Card from "../components/Card";
 
 function useForceUpdate() {
   const [value, setValue] = React.useState(0);
   return () => setValue((value) => value + 1);
 }
 
+const SyncManager = new _SyncManager();
+
 const d = {
-  refid: "react-test-refid-31",
-  arr: [1, 2, 3],
   value: 0,
   text: "hello\n",
   slider: 20,
   radio: "a",
   inputNumber: 0,
   peopleInRoom: 1,
-  timelineItems: [
-    "Create a services site 2015-09-01",
-    "Solve initial network problems 2015-09-01",
-    "Technical testing 2015-09-01",
-    "Network problems being solved 2015-09-01",
-  ],
+  timelineItems: [0, 1],
   step: 2,
   formField1: "",
   formField2: "",
@@ -63,82 +58,104 @@ const AVATAR_COLORS = [
   "#1890ff",
 ];
 
-function App() {
+function MultipleInputs() {
   const forceUpdate = useForceUpdate();
+  const [loaded, setLoaded] = React.useState(false);
+  const [data, setData] = React.useState<any>(d);
 
   const onChange = (patch: any) => {
     console.log("[onChange]", patch);
     forceUpdate();
   };
 
+  const load = async () => {
+    setLoaded(false);
+    await SyncManager.init();
+    const data = await SyncManager.create({
+      data: d,
+      collectionName: "MultiInputs",
+      onChange,
+      refid: "sample-testing-23",
+    });
+    setData(data);
+    console.log("loaded data", data);
+    setLoaded(true);
+  };
+
   const [field1, setField1] = React.useState("");
   const [field2, setField2] = React.useState("");
 
   const changeVal = () => {
-    data.data.value += 1;
+    data.value += 1;
     forceUpdate();
   };
 
   const changeSliderVal = (value: any) => {
-    data.data.slider = value;
+    data.slider = value;
     forceUpdate();
   };
 
   const changeRadioVal = (value: string) => {
-    data.data.radio = value;
+    data.radio = value;
     forceUpdate();
   };
 
   const changeInputNumberVal = (value: number) => {
-    data.data.inputNumber = value;
+    data.inputNumber = value;
     forceUpdate();
   };
 
   const addTimelineValue = () => {
-    data.data.timelineItems.push("Network problems being solved 2015-09-01");
+    data.timelineItems.push(data.timelineItems.length);
     forceUpdate();
   };
 
   const setFormField1 = (value: string) => {
-    data.data.formField1 = value;
+    data.formField1 = value;
     forceUpdate();
   };
 
   const setFormField2 = (value: string) => {
-    data.data.formField2 = value;
-    forceUpdate();
-  };
-
-  const data = React.useMemo(() => Sync(d, onChange), []);
-
-  const init = async () => {
-    await data.sync();
+    data.formField2 = value;
     forceUpdate();
   };
 
   React.useEffect(() => {
-    init();
+    load();
   }, []);
+
+  if (!loaded) {
+    return <div>Loading..</div>;
+  }
+
+  console.log(
+    "[timelineitems]",
+    data.timelineItems.map((val: any) => val),
+    data.timelineItems
+  );
 
   return (
     <div className="App">
       <div>
-        <Avatar.Group>
-          {Array(Math.floor(parseInt(data.data.peopleInRoom) / 2))
+        <Button onClick={forceUpdate}>Force Update</Button>
+      </div>
+      <div>
+        {/* <Avatar.Group>
+          {Array(Math.floor(parseInt(data.peopleInRoom) / 2))
             .fill(0)
             .map((val: number, index: number) => (
               <Avatar style={{ backgroundColor: AVATAR_COLORS[index] }}>
                 {index}
               </Avatar>
             ))}
-        </Avatar.Group>
+        </Avatar.Group> */}
       </div>
       <Row>
         <Col span={8}>
           <Card title="Slider Input">
             <Slider
-              defaultValue={data.data.slider}
-              value={data.data.slider}
+              defaultValue={data.slider}
+              value={data.slider}
               min={0}
               max={100}
               onChange={changeSliderVal}
@@ -148,7 +165,7 @@ function App() {
         <Col span={8}>
           <Card title="Select">
             <Radio.Group
-              value={data.data.radio}
+              value={data.radio}
               buttonStyle="solid"
               onChange={(event) => {
                 changeRadioVal(event.target.value);
@@ -166,7 +183,7 @@ function App() {
             <InputNumber
               min={0}
               max={100}
-              value={data.data.inputNumber}
+              value={data.inputNumber}
               onChange={(val) => {
                 changeInputNumberVal(val);
               }}
@@ -178,7 +195,7 @@ function App() {
         <Col span={12}>
           <Card title="Timeline">
             <Timeline>
-              {data.data.timelineItems.map((item: string) => (
+              {data.timelineItems.map((item: string) => (
                 <Timeline.Item>{item}</Timeline.Item>
               ))}
             </Timeline>
@@ -186,7 +203,7 @@ function App() {
           </Card>
         </Col>
         <Col span={12}>
-          <Card title="Live Form">
+          {/* <Card title="Live Form">
             <Form
               name="basic"
               labelCol={{ span: 8 }}
@@ -197,7 +214,7 @@ function App() {
             >
               <Form.Item label="Name">
                 <Input
-                  value={data.data.formField1}
+                  value={data.formField1}
                   placeholder="Enter your name"
                   onChange={(event) => {
                     setFormField1(event.target.value);
@@ -206,7 +223,7 @@ function App() {
               </Form.Item>
               <Form.Item label="Address">
                 <Input
-                  value={data.data.formField2}
+                  value={data.formField2}
                   placeholder="Enter your address"
                   onChange={(event) => {
                     setFormField2(event.target.value);
@@ -214,11 +231,11 @@ function App() {
                 />
               </Form.Item>
             </Form>
-          </Card>
+          </Card> */}
         </Col>
       </Row>
     </div>
   );
 }
 
-export default App;
+export default MultipleInputs;

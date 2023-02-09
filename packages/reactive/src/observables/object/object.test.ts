@@ -1,5 +1,7 @@
 import { ObservableObject } from "./observable-object";
 import { TPatch } from "../../types/patch.type";
+import { serializeObject } from "../utils/serialize";
+import { cloneDeep } from "lodash";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -241,6 +243,70 @@ describe("testing situations", () => {
   });
 
   test("what happens when things arrive out of order", () => {});
+});
+
+describe("situation tests", () => {
+  test("situation:1", () => {
+    const d = {
+      value: 0,
+      text: "hello\n",
+      slider: 20,
+      radio: "a",
+      inputNumber: 0,
+      peopleInRoom: 1,
+      timelineItems: [0, 1],
+      step: 2,
+      formField1: "",
+      formField2: "",
+    };
+    const patches1: any[] = [];
+    const obj1 = new ObservableObject(d, (patch) => {
+      patches1.push(patch);
+    });
+    for (let i = 0; i < 5; i++) {
+      obj1.inputNumber++;
+    }
+    expect(patches1.length).toBe(5);
+    const obj2 = new ObservableObject(d, () => {});
+    for (let i = 0; i < patches1.length; i++) {
+      obj2.applyPatch(patches1[i]);
+    }
+    expect(obj2.inputNumber).toBe(obj1.inputNumber);
+    console.log("[situation:1]", obj2.timelineItems);
+    expect(obj2.timelineItems.length).toBe(d.timelineItems.length);
+    expect(obj2.timelineItems[0]).toBe(d.timelineItems[0]);
+  });
+  test("situation:2", () => {
+    const d = {
+      inputNumber: 0,
+      timelineItems: [0, 1],
+    };
+    const patches1: any[] = [];
+    const obj1 = new ObservableObject(d, (patch) => {
+      patches1.push(patch);
+    });
+    const samplePatch: TPatch = {
+      op: "replace",
+      path: "/inputNumber",
+      value: 1,
+      actorId: "a",
+      seq: 2,
+    };
+    const serializedObject = serializeObject(obj1);
+    obj1.applyPatch(samplePatch);
+    expect(obj1.timelineItems[0]).toBe(0);
+  });
+  test("situation:3", () => {
+    const d = {
+      inputNumber: 0,
+      timelineItems: [0, 1],
+    };
+    const patches1: any[] = [];
+    const obj1 = new ObservableObject(d, (patch) => {
+      patches1.push(patch);
+    });
+    console.log(cloneDeep(obj1));
+  });
 });
 
 describe("multi user sync test", () => {
