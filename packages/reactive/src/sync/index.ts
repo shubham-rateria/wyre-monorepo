@@ -28,7 +28,6 @@ export function Sync(obj, onChange, actorId = "") {
   let outputBuffer = [];
   let _io = io(socketEndpoint, socketConfig);
   let _data = new ObservableObject(obj, _onChange, actorId);
-  let lamports: { [refid: string]: Lamport } = {};
   let registered = false;
   let socketId: string = "";
   let state: State = "CREATED";
@@ -59,6 +58,12 @@ export function Sync(obj, onChange, actorId = "") {
     });
   }
 
+  async function register() {
+    return new Promise((resolve, reject) => {
+      _io.emit("register", _data.refid);
+    });
+  }
+
   async function init() {
     _io.connect();
 
@@ -70,10 +75,6 @@ export function Sync(obj, onChange, actorId = "") {
 
     _io.on("syncPatches", (data) => {
       console.log("[SYNCPATCH]", data);
-      if (!(data.refid in lamports)) {
-        lamports[data.refid] = new Lamport();
-      }
-      lamports[data.refid].set(data.path, data.lamportTimestamp);
       _data.applyPatch(data);
       onChange();
     });
@@ -111,5 +112,5 @@ export function Sync(obj, onChange, actorId = "") {
 
   init();
 
-  return { data: _data, add, lamports, io: _io, sync };
+  return { data: _data, add, io: _io, sync };
 }
