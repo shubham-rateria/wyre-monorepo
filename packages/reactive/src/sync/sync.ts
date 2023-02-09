@@ -2,12 +2,13 @@ import { io } from "socket.io-client";
 import { ObservableObject } from "../observables/object/observable-object";
 import { serializeObject } from "../observables/utils/serialize";
 import { TPatch } from "../types/patch.type";
+import { cloneDeep } from "lodash";
 
 interface RegisterParams {
   collectionName: string;
   refid: string;
   data: any;
-  onChange: () => void;
+  onChange: (patch: TPatch) => void;
 }
 
 export interface ObjectData {
@@ -68,7 +69,14 @@ export class _SyncManager {
       });
 
       this._io.on("sync:response:" + roomName, (data) => {
-        console.log("[sync:res]", roomName, data);
+        const syncData = cloneDeep(data);
+        console.log(
+          "[sync:res]",
+          roomName,
+          syncData,
+          typeof data,
+          typeof syncData
+        );
         clearTimeout(timer);
         resolve(data);
       });
@@ -90,6 +98,7 @@ export class _SyncManager {
     roomName: string
   ) {
     this._io.on("syncPatches:" + roomName, (patch) => {
+      console.log("[sync:newpatch]", patch);
       // @ts-ignore
       data.applyPatch(patch);
       onChange(patch);
@@ -115,6 +124,7 @@ export class _SyncManager {
     this.objects[params.refid].state = "REGISTERED";
     this.objects[params.refid].state = "SYNCING";
     const syncData = await this.sync(params.refid);
+    console.log("[syncdata]", syncData);
     if (syncData) {
       _data.setRawValues(syncData);
     }

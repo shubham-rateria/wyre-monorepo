@@ -1,15 +1,18 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+import { Todo } from "./todo/Todo";
+import reportWebVitals from "./reportWebVitals";
+import { Counter } from "./Counter/Counter";
+import MultipleInputs from "./MultipleInputs/MultipleInputs";
 
 const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
+  document.getElementById("root") as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <Todo />
   </React.StrictMode>
 );
 

@@ -1,9 +1,9 @@
 import { ObservableObject } from "../object/observable-object";
-import ObservableArray from "./observable-array";
+import ObservableArray, { ArrayValue } from "./observable-array";
 import { TPatch } from "../../types/patch.type";
 import { Key } from "./key/key";
 import { getTokens } from "./patch/patch";
-import { serializeArray } from "../utils/serialize";
+import { serializeArray, serializeObject } from "../utils/serialize";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -41,14 +41,41 @@ describe("tests for array", () => {
     }
     expect(arr.length).toBe(items.length + toAdd);
   });
-  test("child:arr", () => {
-    const items = [
-      [1, 2, 3],
-      [4, 5, 6],
-    ];
+  test("array:map", () => {
+    const items = [1, 2, 3];
     const arr = new ObservableArray(items, () => {});
-    expect(arr[0]).toBeInstanceOf(ObservableArray);
-  });
+    let counter = 0;
+    arr.map((val) => {
+      console.log("map", val);
+      expect(val).toBe(items[counter]);
+      counter++;
+    });
+  }),
+    test("array:push:weirdbug", () => {
+      const pushitems = [1, 2, 3, 4];
+      const arr = new ObservableArray([], () => {});
+      let counter = 0;
+      for (let i = 0; i < pushitems.length; i++) {
+        arr.push(pushitems[i]);
+      }
+      for (let i = 0; i < arr.length; i++) {
+        expect(arr[i]).toBe(pushitems[i]);
+      }
+    }),
+    test("array:push:howmuch", () => {
+      const arr = new ObservableArray([], () => {});
+      for (let i = 0; i < 40; i++) {
+        arr.push(i);
+      }
+    }),
+    test("child:arr", () => {
+      const items = [
+        [1, 2, 3],
+        [4, 5, 6],
+      ];
+      const arr = new ObservableArray(items, () => {});
+      expect(arr[0]).toBeInstanceOf(ObservableArray);
+    });
   test("child:object", () => {
     const items = [{ d: 1 }];
     const arr = new ObservableArray(items, () => {});
@@ -85,38 +112,6 @@ describe("tests for array", () => {
       expect(patches[0].value).toBe(10);
       expect(patches[0].actorId).toBe("a");
     }),
-    test("patch:one client changes value in the array and patch is sent to others", async () => {
-      const items = [1, 2, 3];
-      const patches: TPatch[] = [];
-      const obs1 = new ObservableArray(items, (patch) => {
-        patches.push(patch);
-        console.log("[patch:change]", patch);
-      });
-      const obs2 = new ObservableArray(items, () => {});
-      obs1[0] = 10;
-      await sleep(100);
-      expect(patches.length).toBe(1);
-      expect(patches[0].value).toBe(10);
-      // const tokens = getTokens(patches[0].path);
-      // expect(Key.isCrdtKey(tokens[1])).toBe(true);
-      obs2.applyPatch(patches[0]);
-      expect(obs2[0]).toBe(10);
-    }),
-    test("patch:client:push", async () => {
-      const items = [1, 2, 3];
-      const patches: any[] = [];
-      const obs1 = new ObservableArray(items, (patch) => {
-        patches.push(patch);
-        console.log("[patch:new]", patch);
-      });
-      const obs2 = new ObservableArray(items, () => {});
-      obs1.push(10);
-      await sleep(50);
-      expect(patches.length).toBe(1);
-      obs2.applyPatch(patches[0]);
-      expect(obs2.length).toBe(4);
-      expect(obs2[3]).toBe(10);
-    }),
     test("array: both crdt and normal index works", async () => {
       const items = [1, 2, 3];
       const obs1 = new ObservableArray(items, (patch) => {});
@@ -124,6 +119,76 @@ describe("tests for array", () => {
       expect(obs1[0]).toBe(1);
     });
   test("modify an element", async () => {});
+  test("arr:delete", () => {
+    const items = [1, 2, 3];
+    const patches: any[] = [];
+    const obs1 = new ObservableArray(items, (patch) => {
+      patches.push(patch);
+    });
+    obs1.delete(0);
+    const rawValue = obs1.getRawValue(0);
+    expect(rawValue.tombstone).toBe(true);
+    expect(obs1[0]).toBe(items[1]);
+    expect(patches.length).toBe(1);
+    expect(patches[0].path).toBe("/$0");
+    expect(patches[0].op).toBe("remove");
+  });
+  test("arr:delete:patch", () => {
+    const items = [1, 2, 3];
+    const patch: TPatch = {
+      op: "remove",
+      actorId: "",
+      seq: 2,
+      path: "/$0",
+    };
+    const patches: any[] = [];
+    const arr = new ObservableArray(items, (patch) => {
+      patches.push(patch);
+    });
+    arr.applyPatch(patch);
+    const rawValue: ArrayValue = arr.getRawValue(0);
+    expect(rawValue.tombstone).toBe(true);
+    expect(patches.length).toBe(0);
+    expect(arr[0]).toBe(items[1]);
+  });
+  test("arr:delete:kicker", async () => {
+    /**
+     * when one client deletes an element,
+     * that index cannot be updated.
+     * This means that if patch with add, remove
+     * or delete op is received on a key
+     * that has been deleted, that patch will be ignored
+     */
+    const items = [1, 2, 3];
+    const patches1: any[] = [];
+    const client1 = new ObservableArray(items, (patch) => {
+      patches1.push(patch);
+    });
+    client1.delete(0);
+    expect(patches1.length).toBe(1);
+    const replacePatch: TPatch = {
+      actorId: "",
+      op: "replace",
+      path: "/$0",
+      seq: 2,
+    };
+    client1.applyPatch(replacePatch);
+  });
+  test("patch:nested:object", () => {
+    const data = {
+      todos: [{ text: "some text", done: false }],
+    };
+    const patch: TPatch = {
+      actorId: "",
+      seq: 2,
+      op: "replace",
+      path: "/todos/$0/done",
+      value: true,
+    };
+    const obs = new ObservableObject(data, () => {});
+    obs.applyPatch(patch);
+    expect(obs.todos[0].done).toBe(true);
+  });
 });
 
 describe("raw values test", () => {
@@ -151,5 +216,104 @@ describe("raw values test", () => {
     expect(arr[3].arr[0]).toBe(1);
     expect(arr[3].arr[1]).toBe(2);
     expect(arr[3].arr[2]).toBe(3);
+  });
+});
+
+describe("situational tests", () => {
+  test("situation:1", async () => {
+    const items = [1, 2, 3];
+    const patches: TPatch[] = [];
+    const obs1 = new ObservableArray(items, (patch) => {
+      patches.push(patch);
+      console.log("[patch:change]", patch);
+    });
+    const obs2 = new ObservableArray(items, () => {});
+    obs1[0] = 10;
+    await sleep(100);
+    expect(patches.length).toBe(1);
+    expect(patches[0].value).toBe(10);
+    // const tokens = getTokens(patches[0].path);
+    // expect(Key.isCrdtKey(tokens[1])).toBe(true);
+    obs2.applyPatch(patches[0]);
+    expect(obs2[0]).toBe(10);
+  });
+  test("situation:2", async () => {
+    const items = [1, 2, 3];
+    const patches: any[] = [];
+    const obs1 = new ObservableArray(items, (patch) => {
+      patches.push(patch);
+      console.log("[patch:new]", patch);
+    });
+    const obs2 = new ObservableArray(items, () => {});
+    obs1.push(10);
+    await sleep(50);
+    expect(patches.length).toBe(1);
+    obs2.applyPatch(patches[0]);
+    expect(obs2.length).toBe(4);
+    expect(obs2[3]).toBe(10);
+  });
+  test("situation:3", () => {
+    const arr1 = new ObservableArray([], () => {});
+    const items = [1, 2, 3];
+    items.forEach((item) => arr1.push(item));
+    const serializedArray = serializeArray(arr1);
+    const arr2 = new ObservableArray([], () => {});
+    arr2.setRawValues(serializedArray);
+    expect(arr2.length).toBe(items.length);
+    for (let i = 0; i < items.length; i++) {
+      expect(arr2[i]).toBe(items[i]);
+    }
+  });
+  test("situation:4", () => {
+    const items = [
+      { id: 0, text: "", done: false },
+      { id: 1, text: "", done: false },
+      { id: 2, text: "", done: false },
+      { id: 3, text: "", done: false },
+    ];
+    const d = { todos: items };
+    const obj1 = new ObservableObject(d, () => {});
+    const additionalItems = [
+      { id: 4, text: "", done: false },
+      { id: 5, text: "", done: false },
+      { id: 6, text: "", done: false },
+    ];
+    for (let i = 0; i < additionalItems.length; i++) {
+      obj1.todos.push(additionalItems[i]);
+    }
+    expect(obj1.todos.length).toBe(items.length + additionalItems.length);
+    for (let i = 0; i < obj1.todos.length - 1; i++) {
+      expect(obj1.todos[i].id).toBeLessThan(obj1.todos[i + 1].id);
+    }
+  });
+  test("situation:5", () => {
+    const items = [
+      { id: 0, text: "", done: false },
+      { id: 1, text: "", done: false },
+      { id: 2, text: "", done: false },
+      { id: 3, text: "", done: false },
+    ];
+    const d = { todos: items };
+    const obj1 = new ObservableObject(d, () => {});
+    const additionalItems = [
+      { id: 4, text: "", done: false },
+      { id: 5, text: "", done: false },
+      { id: 6, text: "", done: false },
+    ];
+    for (let i = 0; i < additionalItems.length; i++) {
+      obj1.todos.push(additionalItems[i]);
+    }
+    expect(obj1.todos.length).toBe(items.length + additionalItems.length);
+    for (let i = 0; i < obj1.todos.length - 1; i++) {
+      expect(obj1.todos[i].id).toBeLessThan(obj1.todos[i + 1].id);
+    }
+
+    const serializedObject = serializeObject(obj1);
+    const obj2 = new ObservableObject({}, () => {});
+    obj2.setRawValues(serializedObject);
+    expect(obj2.todos.length).toBe(items.length + additionalItems.length);
+    for (let i = 0; i < obj2.todos.length - 1; i++) {
+      expect(obj2.todos[i].id).toBeLessThan(obj2.todos[i + 1].id);
+    }
   });
 });
