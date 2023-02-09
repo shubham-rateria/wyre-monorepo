@@ -1,5 +1,6 @@
 import { ObservableObject } from "../observables/object/observable-object";
 import { Sync } from "./index";
+import { _SyncManager } from "./sync";
 
 const obj = { refid: "some-new-channel-20", d: 1 };
 
@@ -79,26 +80,70 @@ describe("test end to end sync", () => {
   // });
 });
 
-describe("testing initial sync", () => {
-  test("sync:initial:3 clients", async () => {
-    const data = { counter: 1, refid: "a-random-refid-105" };
-    const obs1 = Sync(data, () => {}, "a");
-    const obs2 = Sync(data, () => {}, "b");
+// describe("testing initial sync", () => {
+//   test("sync:initial:3 clients", async () => {
+//     const data = { counter: 1, refid: "a-random-refid-105" };
+//     const obs1 = Sync(data, () => {}, "a");
+//     const obs2 = Sync(data, () => {}, "b");
 
-    await sleep(10000);
+//     await sleep(10000);
 
-    obs1.data.counter++;
-    await sleep(100);
-    obs2.data.counter++;
+//     obs1.data.counter++;
+//     await sleep(100);
+//     obs2.data.counter++;
 
-    await sleep(1000);
+//     await sleep(1000);
 
-    const obs3 = Sync(data, () => {}, "c");
-    await obs3.sync();
+//     const obs3 = Sync(data, () => {}, "c");
+//     await obs3.sync();
 
-    await sleep(5000);
+//     await sleep(5000);
 
-    expect(obs2.data.counter).toBe(obs1.data.counter);
-    expect(obs3.data.counter).toBe(obs1.data.counter);
+//     expect(obs2.data.counter).toBe(obs1.data.counter);
+//     expect(obs3.data.counter).toBe(obs1.data.counter);
+//   });
+// });
+
+describe("test sync manager", () => {
+  test("1", async () => {
+    const sync1 = new _SyncManager();
+    // const sync2 = new _SyncManager();
+    const sync3 = new _SyncManager();
+    await sync1.init();
+    // await sync2.init();
+    await sync3.init();
+
+    const data = { counter: 1, refid: "a-random-refid-130" };
+
+    const data1 = await sync1.create({
+      data,
+      collectionName: "TestCollection",
+      refid: data.refid,
+      onChange() {},
+    });
+    // const data2 = await sync2.create({
+    //   data,
+    //   collectionName: "TestCollection",
+    //   refid: data.refid,
+    //   onChange() {},
+    // });
+
+    // @ts-ignore
+    data1.counter++;
+    // @ts-ignore
+    // data2.counter++;
+
+    const data3 = await sync3.create({
+      data,
+      collectionName: "TestCollection",
+      refid: data.refid,
+      onChange() {},
+    });
+
+    await sleep(2000);
+    // @ts-ignore
+    // expect(data2.counter).toBe(data1.counter);
+    // @ts-ignore
+    expect(data3.counter).toBe(data1.counter);
   });
 });
