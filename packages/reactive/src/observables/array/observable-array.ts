@@ -48,14 +48,41 @@ export default function ObservableArray(items, onChange, actorId = "") {
       iteminsert: [],
     };
 
+  function getElementAtIndex(index: number) {
+    /**
+     * find the indexed'th number that is not a
+     * tombstone.
+     * // TODO: this will start causing issues when
+     * the number of array elements increase a lot.
+     * We will need to find a way to optimize this
+     */
+    let nonDeleted = -1;
+    for (let i = 0; i < _array.length; i++) {
+      const rawValue: ArrayValue = _array[i];
+      if (!rawValue.tombstone) {
+        nonDeleted++;
+      }
+      if (nonDeleted === index) {
+        return rawValue;
+      }
+    }
+    return undefined;
+  }
+
   function defineIndexProperty(index: string | number) {
     Object.defineProperty(_self, index, {
       configurable: true,
       enumerable: true,
       get: function () {
+        console.log("[arr:get:req]", index, Key.isCrdtKey(index.toString()));
         if (Key.isCrdtKey(index.toString())) {
-          index = _self.findIndex(index);
-          if (index === -1) {
+          console.log(
+            "[arr:get:req:crdtindex]",
+            index,
+            Key.isCrdtKey(index.toString())
+          );
+          const arrayIndex = crdtIndexToArrayIndex(index.toString());
+          if (arrayIndex === -1) {
             /**
              * TODO: what to do when an unknown CRDT index
              * arrives?
@@ -63,24 +90,23 @@ export default function ObservableArray(items, onChange, actorId = "") {
             console.error("Invalid CRDT index");
             return undefined;
           }
+          const rawValue: ArrayValue = _array[arrayIndex];
+          return rawValue?.value;
+        } else {
+          /**
+           * If we are querying by array index,
+           * the value at index might be tombstoned.
+           * To take care of this case, we have to find
+           * the next non-tombstoned value to send
+           */
+
+          const rawValue: ArrayValue | undefined = getElementAtIndex(
+            parseInt(index.toString())
+          );
+
+          console.log("[arr:get]", index, rawValue);
+          return rawValue?.value;
         }
-
-        /**
-         * If we are querying by array index,
-         * the value at index might be tombstoned.
-         * To take care of this case, we have to find
-         * the next non-tombstoned value to send
-         */
-        console.log("[arr:get]", index, _array[index]);
-
-        for (let i = parseInt(index.toString()); i < _array.length; i++) {
-          const rawValue = _array[i];
-          if (!rawValue.tombstone) {
-            return rawValue.value;
-          }
-        }
-
-        return undefined;
       },
       set: function (v) {
         /**
@@ -92,13 +118,21 @@ export default function ObservableArray(items, onChange, actorId = "") {
          * or not and process accordingly
          */
 
-        _array[index].timestamp.increment();
-        _array[index].timestamp.timestamp.actorId = _actorId;
-        _array[index].value = v;
+        const rawValue: ArrayValue | undefined = getElementAtIndex(
+          parseInt(index.toString())
+        );
+
+        if (!rawValue) {
+          return;
+        }
+
+        rawValue.timestamp.increment();
+        rawValue.timestamp.timestamp.actorId = _actorId;
+        rawValue.value = v;
         raiseEvent({
           type: "itemchanged",
-          path: "/" + index,
-          timestamp: _array[index].timestamp.timestamp,
+          path: "/" + rawValue.key.toString(),
+          timestamp: rawValue.timestamp.timestamp,
           value: v,
         });
       },
@@ -151,6 +185,12 @@ export default function ObservableArray(items, onChange, actorId = "") {
   });
 
   function getRawValue(key: string) {
+    if (!Key.isCrdtKey(key.toString())) {
+      const rawValue = getElementAtIndex(parseInt(key));
+      console.log("[array:getrawvalue:arrindex]", rawValue);
+      return rawValue;
+    }
+    console.log("[array:getrawvalue:crdtindex]", _array[key]);
     return _array[key];
   }
 
@@ -168,11 +208,11 @@ export default function ObservableArray(items, onChange, actorId = "") {
     configurable: false,
     writable: false,
     value: function (
-      index: number | string,
+      crdtIndex: string,
       value: any,
       timestampValue: TimestampValue
     ) {
-      if (!Key.isCrdtKey(index.toString())) {
+      if (!Key.isCrdtKey(crdtIndex.toString())) {
         throw new Error("Only CRDT keys can be used to apply patch on array.");
       }
 
@@ -181,13 +221,16 @@ export default function ObservableArray(items, onChange, actorId = "") {
         timestampValue.seq
       );
 
-      index = _self.findIndex(index);
+      const key = Key.fromString(crdtIndex);
 
-      const rawValue: ArrayValue = _array[index];
+      let arrayIndex = crdtIndexToArrayIndex(crdtIndex);
 
-      if (canWrite(rawValue, timestamp) && !rawValue.tombstone) {
-        _array[index].value = value;
-        _array[index].timestamp = timestamp;
+      const rawValue: ArrayValue = _array[arrayIndex];
+      const transformedValue = getValueToSet(key.toString(), value);
+
+      if (rawValue && canWrite(rawValue, timestamp) && !rawValue.tombstone) {
+        rawValue.value = transformedValue;
+        rawValue.timestamp = timestamp;
       }
     },
   });
@@ -221,29 +264,25 @@ export default function ObservableArray(items, onChange, actorId = "") {
         timestampValue.seq
       );
 
-      if (_self.findIndex(crdtIndex) !== -1) {
-        const changeIndex = _self.findIndex(crdtIndex);
+      const key = Key.fromString(crdtIndex);
+      const transformedValue = getValueToSet(key.toString(), value);
+
+      if (crdtIndexToArrayIndex(crdtIndex) !== -1) {
+        const changeIndex = crdtIndexToArrayIndex(crdtIndex);
 
         const rawValue = _array[changeIndex];
-        console.log(
-          "[settingvaluefromtpatch]",
-          changeIndex,
-          timestamp,
-          rawValue
-        );
 
         if (canWrite(rawValue, timestamp)) {
-          console.log("[settingvaluefrompatch]", changeIndex, value);
-          _array[changeIndex].value = value;
-          _array[changeIndex].timestamp = timestamp;
-          _array[changeIndex].tombstone = false;
+          rawValue.value = transformedValue;
+          rawValue.timestamp = timestamp;
+          rawValue.tombstone = false;
         }
       } else {
         const rawValue: ArrayValue = {
-          value: value,
+          value: transformedValue,
           timestamp: timestamp,
           isPrimitive: isPrimitiveType(value) || false,
-          key: Key.fromString(crdtIndex),
+          key: key,
           tombstone: false,
         };
 
@@ -251,9 +290,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
          * Find index to insert into.
          * Move the other elements by 1
          */
-
-        const key = crdtIndex;
-        const insertIndex: number = _self.getIndexFromCrdtKey(key);
+        const insertIndex: number = _self.findIndexToInsert(key.toString());
 
         if (insertIndex >= _array.length) {
           _array[insertIndex] = rawValue;
@@ -270,14 +307,13 @@ export default function ObservableArray(items, onChange, actorId = "") {
          * this is a new crdt index,
          * define index property for get
          */
-        defineIndexProperty(crdtIndex);
+        defineIndexProperty(key.toString());
 
         /**
          * insert index is already defined, i.e.,
          * existing index. We have to add a new index for the last
          * element of the array
          */
-
         defineIndexProperty(_array.length - 1);
       }
     },
@@ -319,8 +355,8 @@ export default function ObservableArray(items, onChange, actorId = "") {
         actorId: event.timestamp.actorId,
         seq: event.timestamp.seq,
       };
-      const modPath = convertIndexedToCrdtPath(_self, patch);
-      patch.path = modPath;
+      // const modPath = convertIndexedToCrdtPath(_self, patch);
+      // patch.path = modPath;
       onChange(patch);
     }
     if (event.type === "itemadded") {
@@ -331,8 +367,8 @@ export default function ObservableArray(items, onChange, actorId = "") {
         actorId: event.timestamp.actorId,
         seq: event.timestamp.seq,
       };
-      const modPath = convertIndexedToCrdtPath(_self, patch);
-      patch.path = modPath;
+      // const modPath = convertIndexedToCrdtPath(_self, patch);
+      // patch.path = modPath;
       onChange(patch);
     }
     if (event.type === "itemdeleted") {
@@ -343,8 +379,8 @@ export default function ObservableArray(items, onChange, actorId = "") {
         actorId: event.timestamp.actorId,
         seq: event.timestamp.seq,
       };
-      const modPath = convertIndexedToCrdtPath(_self, patch);
-      patch.path = modPath;
+      // const modPath = convertIndexedToCrdtPath(_self, patch);
+      // patch.path = modPath;
       onChange(patch);
     }
 
@@ -353,22 +389,22 @@ export default function ObservableArray(items, onChange, actorId = "") {
     });
   }
 
-  Object.defineProperty(_self, "findIndex", {
+  function crdtIndexToArrayIndex(crdtIndex: string) {
+    let index: number = -1;
+    for (let i = 0; i < _array.length; i++) {
+      if (_array[i].key.toString() === Key.fromString(crdtIndex).toString()) {
+        index = i;
+      }
+    }
+    return index;
+  }
+
+  Object.defineProperty(_self, "crdtIndexToArrayIndex", {
     enumerable: false,
     writable: false,
     configurable: false,
     value: function (key: string) {
-      let index: number = -1;
-      for (let i = 0; i < _array.length; i++) {
-        console.log(
-          "[findIndex]",
-          _array[i].key.toString() === Key.fromString(key).toString()
-        );
-        if (_array[i].key.toString() === Key.fromString(key).toString()) {
-          index = i;
-        }
-      }
-      return index;
+      return crdtIndexToArrayIndex(key);
     },
   });
 
@@ -398,7 +434,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
     return index + 1;
   }
 
-  Object.defineProperty(_self, "getIndexFromCrdtKey", {
+  Object.defineProperty(_self, "findIndexToInsert", {
     configurable: false,
     enumerable: false,
     writable: false,
@@ -456,12 +492,27 @@ export default function ObservableArray(items, onChange, actorId = "") {
    * @param index the array index to delete
    */
   function deleteValue(index: number) {
-    const rawValue = _array[index];
+    /**
+     * delete is not straightforward.
+     * we will have to find what index corresponds to the
+     * non tombstoned value for this array
+     */
+
+    // for (let i = index; i < _array.length; i++) {
+    //   const rawValue = _array[i];
+    //   if (!rawValue.tombstone) {
+    //     index = i;
+    //     return;
+    //   }
+    // }
+
+    const rawValue: ArrayValue | undefined = getElementAtIndex(index);
+    console.log("[deletevalue]", rawValue);
     if (rawValue) {
       rawValue.tombstone = true;
       rawValue.timestamp.increment();
       raiseEvent({
-        path: "/" + index,
+        path: "/" + rawValue.key.toString(),
         timestamp: rawValue.timestamp.timestamp,
         type: "itemdeleted",
       });
@@ -482,11 +533,11 @@ export default function ObservableArray(items, onChange, actorId = "") {
     writable: false,
     configurable: false,
     value: function (
-      index: number | string,
+      crdtIndex: string,
       value: any,
       timestampValue: TimestampValue
     ) {
-      if (!Key.isCrdtKey(index.toString())) {
+      if (!Key.isCrdtKey(crdtIndex.toString())) {
         throw new Error("Only CRDT keys can be used to apply patch on array.");
       }
 
@@ -495,7 +546,10 @@ export default function ObservableArray(items, onChange, actorId = "") {
         timestampValue.seq
       );
 
-      const arrayIndex = _self.findIndex(index);
+      const arrayIndex = crdtIndexToArrayIndex(crdtIndex);
+
+      console.log("[deletevaluefrompatch]", arrayIndex, _array[arrayIndex]);
+
       if (arrayIndex !== -1) {
         const rawValue: ArrayValue = _array[arrayIndex];
         if (canWrite(rawValue, timestamp)) {
@@ -590,7 +644,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
           // item: arguments[i],
           // TODO: do we need to convert this to
           // array Key string?
-          path: "/" + index,
+          path: "/" + newKey.toString(),
           timestamp: timestamp.timestamp,
           value: arguments[i],
         });
@@ -701,11 +755,31 @@ export default function ObservableArray(items, onChange, actorId = "") {
   //   },
   // });
 
+  Object.defineProperty(_self, "indexOf", {
+    configurable: false,
+    enumerable: false,
+    writable: false,
+    value: function (checkFunction: (value: any) => boolean) {
+      let index = -1;
+      for (let i = 0; i < _array.length; i++) {
+        const rawValue: ArrayValue = _array[i];
+        if (rawValue.tombstone) {
+          continue;
+        }
+        index++;
+        if (checkFunction(rawValue.value)) {
+          return index;
+        }
+      }
+      return index;
+    },
+  });
+
   Object.defineProperty(_self, "length", {
     configurable: false,
     enumerable: false,
     get: function () {
-      return _array.length;
+      return _array.filter((value: ArrayValue) => !value.tombstone).length;
     },
   });
 

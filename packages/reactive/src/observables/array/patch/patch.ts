@@ -60,13 +60,13 @@ export function convertIndexedToCrdtPath(
 
       if (patch.op === "replace") {
         // @ts-ignore
-        index = value.findIndex(token);
+        index = value.crdtIndexToArrayIndex(token);
         if (!index) {
           throw new Error("could not find index" + token);
         }
       } else {
         // @ts-ignore
-        index = value.getIndexFromCrdtKey(token);
+        index = value.findIndexToInsert(token);
       }
 
       modPath += "/" + token;
@@ -81,85 +81,6 @@ export function convertIndexedToCrdtPath(
     } else {
       modPath += "/" + token;
       value = parent[token];
-    }
-  }
-
-  return modPath;
-}
-
-export function convertPathToIndexed(
-  object: typeof ObservableArray,
-  patch: TPatch
-) {
-  /**
-   * patch will be of the form
-   *
-   * op: "add" | "remove" | "insert" | "replace"
-   * path: "/abcde$0.45"
-   * value: 10
-   * lamportTimestamp: 10
-   *
-   * In case of each operation,
-   * we have to find the index where the path fits,
-   * transpose, i.e., change the path to mean that index
-   * and apply the patch
-   *
-   * Path may contain multiple keys where the path
-   * is a CRDT key, we have to find each key and if
-   * it is a CRDT key, find the index where the op
-   * is to be applied and transpose
-   *
-   *
-   */
-
-  let modPath = "";
-  let parent: any = null;
-  let value = object;
-  const tokens = getTokens(patch.path);
-
-  console.log("[convertingPath]", tokens, patch.path);
-
-  for (const token of tokens) {
-    console.log("[convertPathToIndex]:value", value);
-
-    if (!Key.isCrdtKey(token)) {
-      console.log("[convertPathToIndex]:is not crdt", token);
-      modPath += "/" + token;
-      parent = value;
-      value = parent[token];
-      continue;
-    }
-    /**
-     * Find the index
-     */
-
-    let index: number;
-
-    if (patch.op === "replace") {
-      // @ts-ignore
-      index = value.findIndex(token);
-      console.log("[non crdt key]", index, token);
-      if (index === -1) {
-        throw new Error("could not find index" + token);
-      }
-    } else {
-      // @ts-ignore
-      index = value.getIndexFromCrdtKey(token);
-    }
-
-    modPath += "/" + index.toString();
-
-    /**
-     * parent[index] in this case has to be a crdt array
-     */
-    parent = value;
-
-    /**
-     * in case of adding to the end,
-     * the parent[index] will be undefined
-     */
-    if (parent[index]) {
-      value = parent[index].value;
     }
   }
 
