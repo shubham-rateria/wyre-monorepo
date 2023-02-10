@@ -4,7 +4,7 @@ import { Timestamp, TimestampValue } from "../../lamport/index";
 import { TPatch } from "../../types/patch.type";
 import { ObservableObject } from "../object/observable-object";
 import { ArraySerializedValue } from "../utils/serialize";
-import { Key } from "./key/key";
+import { Key, KEY_DELTA } from "./key/key";
 import { apply, convertIndexedToCrdtPath } from "./patch/patch";
 
 const MIN_ARR_VALUE = 0;
@@ -828,7 +828,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
      * calculate index values
      */
 
-    const step = MAX_ARR_INIT_VALUE / items.length;
+    // const step = MAX_ARR_INIT_VALUE / items.length;
 
     for (let i = 0; i < items.length; i++) {
       let item: any = items[i];
@@ -836,7 +836,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
        * on initial load, we don't want actor id to be in the key
        * to prevent problems during initial load sync
        */
-      let key = new Key((step * i).toString());
+      let key = new Key((KEY_DELTA * i).toString());
 
       const valueToSet = getValueToSet(key.toString(), item);
 
