@@ -5,6 +5,7 @@ import { Timestamp, TimestampValue } from "../../lamport";
 import { TPatch } from "../../types/patch.type";
 import { TValue } from "../../types/value.type";
 import ObservableArray from "../array/observable-array";
+import filterObject from "../utils/filter-object";
 import {
   ArraySerializedValue,
   ObjectSerializedValue,
@@ -197,7 +198,7 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
 
     if (key in _object) {
       const objectValue = _object[key];
-      if (objectValue.timestamp.lessThan(timestamp)) {
+      if (objectValue.timestamp.lessThan(timestamp) && !objectValue.tombstone) {
         _object[key].timestamp = timestamp;
         _object[key].value = transformedValue;
         _object[key].tombstone = false;
@@ -283,6 +284,7 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
         return !_object[key]?.tombstone ? _object[key].value : undefined;
       },
       set: function (v) {
+        console.log("[object:set]", key, v);
         setKeyValueBySelf(key, v);
       },
     });
@@ -341,8 +343,45 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
     writable: false,
     configurable: false,
     value: function () {
-      // TODO: ignore dead values
-      return Object.keys(_object);
+      const filteredObject = filterObject(
+        _object,
+        (value: TValue, key: string) => {
+          return !value.tombstone;
+        }
+      );
+      return Object.keys(filteredObject);
+    },
+  });
+
+  function insertNewKey(key: string, value: any) {
+    if (key in _object) {
+      throw new Error("Key already exists.");
+    }
+
+    const transformedValue = getValueToSet(key, value);
+    const timestamp = new Timestamp(_actorId);
+    const rawValue: TValue = {
+      isPrimitive: isPrimitiveType(value) || false,
+      timestamp: timestamp,
+      tombstone: false,
+      value: transformedValue,
+    };
+    _object[key] = rawValue;
+    defineKeyProperty(key);
+    raiseEvent({
+      type: "itemadded",
+      path: "/" + key,
+      value: value,
+      timestamp: timestamp.timestamp,
+    });
+  }
+
+  Object.defineProperty(_self, "insert", {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function (key: string, value: any) {
+      return insertNewKey(key, value);
     },
   });
 
@@ -375,7 +414,7 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
 
     if (event.type === "itemdeleted") {
       const patch = {
-        op: "delete",
+        op: "remove",
         path: event.path,
         value: event.value,
         actorId: event.timestamp.actorId,
