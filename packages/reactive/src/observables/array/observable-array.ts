@@ -541,10 +541,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
         throw new Error("Only CRDT keys can be used to apply patch on array.");
       }
 
-      const timestamp = new Timestamp(
-        timestampValue.actorId,
-        timestampValue.seq
-      );
+      let timestamp = new Timestamp(timestampValue.actorId, timestampValue.seq);
 
       const arrayIndex = crdtIndexToArrayIndex(crdtIndex);
 
@@ -552,10 +549,20 @@ export default function ObservableArray(items, onChange, actorId = "") {
 
       if (arrayIndex !== -1) {
         const rawValue: ArrayValue = _array[arrayIndex];
-        if (canWrite(rawValue, timestamp)) {
-          _array[arrayIndex].tombstone = true;
-          _array[arrayIndex].timestamp = timestamp;
+
+        /**
+         * We check if my timestamp is lower than yours,
+         * then I will update my timestamp to match yours.
+         * This will ensure that if multiple users delete
+         * a value at the same time, the timestamps will
+         * still be in sync
+         */
+
+        if (rawValue.timestamp.lessThan(timestamp)) {
+          rawValue.timestamp = timestamp;
         }
+
+        _array[arrayIndex].tombstone = true;
       }
     },
   });
