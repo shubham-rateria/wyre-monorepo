@@ -167,11 +167,25 @@ export default function ObservableArray(items, onChange, actorId = "") {
         newItem.setRawValues(item.value);
         item.value = newItem;
       }
-      item.timestamp = timestamp;
-      item.key = key;
-      _array.push(item);
-      defineIndexProperty(i);
-      defineIndexProperty(key.toString());
+
+      /**
+       * if the key exists, compare timestamps
+       * and apply change
+       */
+      const arrayIndex = crdtIndexToArrayIndex(key.toString());
+      if (arrayIndex !== -1) {
+        const arrayValue: ArrayValue = _array[arrayIndex];
+        if (arrayValue.timestamp.lessThan(timestamp)) {
+          arrayValue.timestamp = timestamp;
+          arrayValue.value = item.value;
+        }
+      } else {
+        item.timestamp = timestamp;
+        item.key = key;
+        _array.push(item);
+        defineIndexProperty(i);
+        defineIndexProperty(key.toString());
+      }
     }
   }
 

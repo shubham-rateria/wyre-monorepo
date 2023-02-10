@@ -135,8 +135,20 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
         obj.setRawValues(item.value);
         item.value = obj;
       }
-      _object[key] = item;
-      defineKeyProperty(key);
+
+      /**
+       * if the key exists, compare timestamps
+       * and apply change
+       */
+      if (key in _object) {
+        const rawValue: TValue = _object[key];
+        if (rawValue.timestamp.lessThan(timestamp)) {
+          _object[key] = item;
+        }
+      } else {
+        _object[key] = item;
+        defineKeyProperty(key);
+      }
     });
   }
 
