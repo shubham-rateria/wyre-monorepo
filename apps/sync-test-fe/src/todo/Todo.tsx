@@ -31,7 +31,7 @@ export const Todo: React.FC = () => {
       onChange() {
         forceUpdate();
       },
-      refid: "sample-testing-100",
+      refid: "sample-testing-120",
     });
     setData(data);
     console.log("loaded data", data);
@@ -44,7 +44,7 @@ export const Todo: React.FC = () => {
 
   const addNewTodo = () => {
     data.todos.push({
-      text: "",
+      text: (data.todos.length + 1).toString(),
       done: false,
     });
     forceUpdate();
@@ -60,9 +60,23 @@ export const Todo: React.FC = () => {
     forceUpdate();
   };
 
+  const handleTodoDelete = (todo: Todo) => {
+    const index = data.todos.indexOf((_todo: Todo) => _todo.text === todo.text);
+    console.log("[deleting todo at index]", index, data.todos[index]);
+    if (index !== -1) {
+      data.todos.delete(index);
+      forceUpdate();
+    }
+  };
+
   if (!loaded) {
     return <div>Loading...</div>;
   }
+
+  console.log(
+    "[todos]",
+    data.todos.map((val: any) => val)
+  );
 
   return (
     <div>
@@ -73,7 +87,7 @@ export const Todo: React.FC = () => {
         <Button onClick={addNewTodo}>Add New Todo</Button>
       </div>
       <div>
-        {data.todos.map((todo: Todo) => (
+        {data.todos.map((todo: Todo, index: number) => (
           <Row>
             <Col span={18}>
               <Input
@@ -84,13 +98,22 @@ export const Todo: React.FC = () => {
                 }}
               />
             </Col>
-            <Col span={6}>
+            <Col span={3}>
               <Switch
                 checked={todo.done}
                 onChange={(checked: boolean) => {
                   handleTodoDoneChange(todo, checked);
                 }}
               />
+              <Col span={3}>
+                <Button
+                  onClick={() => {
+                    handleTodoDelete(todo);
+                  }}
+                >
+                  D
+                </Button>
+              </Col>
             </Col>
           </Row>
         ))}
