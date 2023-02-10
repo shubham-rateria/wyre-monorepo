@@ -199,12 +199,6 @@ export default function ObservableArray(items, onChange, actorId = "") {
   });
 
   function getRawValue(key: string) {
-    if (!Key.isCrdtKey(key.toString())) {
-      const rawValue = getElementAtIndex(parseInt(key));
-      console.log("[array:getrawvalue:arrindex]", rawValue);
-      return rawValue;
-    }
-    console.log("[array:getrawvalue:crdtindex]", _array[key]);
     return _array[key];
   }
 
@@ -801,6 +795,15 @@ export default function ObservableArray(items, onChange, actorId = "") {
     enumerable: false,
     get: function () {
       return _array.filter((value: ArrayValue) => !value.tombstone).length;
+    },
+  });
+
+  Object.defineProperty(_self, "rawLength", {
+    configurable: false,
+    enumerable: false,
+    writable: false,
+    get: function () {
+      return _array.length;
     },
   });
 
