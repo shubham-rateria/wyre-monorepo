@@ -175,7 +175,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
       const arrayIndex = crdtIndexToArrayIndex(key.toString());
       if (arrayIndex !== -1) {
         const arrayValue: ArrayValue = _array[arrayIndex];
-        if (arrayValue.timestamp.lessThan(timestamp)) {
+        if (arrayValue.timestamp.lessThan(timestamp) && !arrayValue.tombstone) {
           arrayValue.timestamp = timestamp;
           arrayValue.value = item.value;
         }
