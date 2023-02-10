@@ -2,6 +2,7 @@ import { ObservableObject } from "./observable-object";
 import { TPatch } from "../../types/patch.type";
 import { serializeObject } from "../utils/serialize";
 import { cloneDeep } from "lodash";
+import ObservableArray from "../array/observable-array";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -179,6 +180,30 @@ describe("nested patches", () => {
     };
     obs.applyPatch(patch);
     expect(obs.key.key).toBe(10);
+  });
+  test("object:key:insert", () => {
+    const patches: any[] = [];
+    const obs = new ObservableObject({}, (patch: any) => {
+      patches.push(patch);
+    });
+    obs.insert("key", [1, 2, 3]);
+    expect(obs.key.length).toBe(3);
+    expect(obs.key).toBeInstanceOf(ObservableArray);
+    expect(patches.length).toBe(1);
+    expect(patches[0].path).toBe("/key");
+    expect(patches[0].op).toBe("add");
+    console.log(obs.key, typeof obs, obs, typeof obs.key);
+  });
+  test("object:key:insert:patch", () => {
+    const patches: any[] = [];
+    const obs = new ObservableObject({}, (patch: any) => {
+      patches.push(patch);
+    });
+    obs.insert("key", [1, 2, 3]);
+    const obs1 = new ObservableObject({}, () => {});
+    obs1.applyPatch(patches[0]);
+    expect(obs1.key.length).toBe(3);
+    expect(obs1.key).toBeInstanceOf(ObservableArray);
   });
 });
 
