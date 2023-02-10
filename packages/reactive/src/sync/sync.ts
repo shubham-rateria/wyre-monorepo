@@ -3,6 +3,8 @@ import { ObservableObject } from "../observables/object/observable-object";
 import { serializeObject } from "../observables/utils/serialize";
 import { TPatch } from "../types/patch.type";
 import { cloneDeep } from "lodash";
+import ObservableArray from "../observables/array/observable-array";
+import isArrayType from "../helpers/isArrayType";
 
 interface RegisterParams {
   collectionName: string;
@@ -110,11 +112,27 @@ export class _SyncManager {
       return this.objects[params.refid].data;
     }
 
-    const _data = new ObservableObject(
-      params.data,
-      this.getPatchSendHandler(params.refid, params.collectionName),
-      this.socketId
-    );
+    /**
+     * check the type of params.data
+     */
+
+    let _data: typeof ObservableArray | typeof ObservableObject;
+
+    if (isArrayType(params.data)) {
+      _data = new ObservableArray(
+        params.data,
+        this.getPatchSendHandler(params.refid, params.collectionName),
+        this.socketId
+      );
+    } else if (typeof params.data === "object" && params.data !== null) {
+      _data = new ObservableObject(
+        params.data,
+        this.getPatchSendHandler(params.refid, params.collectionName),
+        this.socketId
+      );
+    } else {
+      throw new Error(`We do not support ${typeof params.data} yet.`);
+    }
     this.objects[params.refid] = {
       data: _data,
       state: "CREATED",
@@ -126,6 +144,7 @@ export class _SyncManager {
     const syncData = await this.sync(params.refid);
     console.log("[syncdata]", syncData);
     if (syncData) {
+      // @ts-ignore
       _data.setRawValues(syncData);
     }
     this.objects[params.refid].state = "SYNCED";
