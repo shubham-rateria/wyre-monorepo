@@ -5,6 +5,7 @@ import { Timestamp, TimestampValue } from "../../lamport";
 import { TPatch } from "../../types/patch.type";
 import { TValue } from "../../types/value.type";
 import ObservableArray from "../array/observable-array";
+import filterObject from "../utils/filter-object";
 import {
   ArraySerializedValue,
   ObjectSerializedValue,
@@ -342,8 +343,13 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
     writable: false,
     configurable: false,
     value: function () {
-      // TODO: ignore dead values
-      return Object.keys(_object);
+      const filteredObject = filterObject(
+        _object,
+        (value: TValue, key: string) => {
+          return !value.tombstone;
+        }
+      );
+      return Object.keys(filteredObject);
     },
   });
 
@@ -408,7 +414,7 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
 
     if (event.type === "itemdeleted") {
       const patch = {
-        op: "delete",
+        op: "remove",
         path: event.path,
         value: event.value,
         actorId: event.timestamp.actorId,
