@@ -20,7 +20,7 @@ export default [
       {
         file: `dist/index.js`,
         format: "es",
-        sourcemap: false,
+        sourcemap: true,
       },
     ],
   }),
@@ -29,6 +29,7 @@ export default [
     output: {
       file: `dist/index.d.ts`,
       format: "es",
+      sourcemap: true,
     },
   }),
 ];
