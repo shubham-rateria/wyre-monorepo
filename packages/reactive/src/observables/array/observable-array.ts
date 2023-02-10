@@ -4,6 +4,7 @@ import { Timestamp, TimestampValue } from "../../lamport/index";
 import { TPatch } from "../../types/patch.type";
 import { ObservableObject } from "../object/observable-object";
 import { ArraySerializedValue } from "../utils/serialize";
+import { arrayToJSON } from "../utils/toJSON";
 import { Key, KEY_DELTA } from "./key/key";
 import { apply, convertIndexedToCrdtPath } from "./patch/patch";
 
@@ -199,12 +200,6 @@ export default function ObservableArray(items, onChange, actorId = "") {
   });
 
   function getRawValue(key: string) {
-    if (!Key.isCrdtKey(key.toString())) {
-      const rawValue = getElementAtIndex(parseInt(key));
-      console.log("[array:getrawvalue:arrindex]", rawValue);
-      return rawValue;
-    }
-    console.log("[array:getrawvalue:crdtindex]", _array[key]);
     return _array[key];
   }
 
@@ -214,6 +209,28 @@ export default function ObservableArray(items, onChange, actorId = "") {
     writable: false,
     value: function (key: string) {
       return getRawValue(key);
+    },
+  });
+
+  function getRawValueAtArrayIndex(index: number) {
+    return getElementAtIndex(index);
+  }
+
+  Object.defineProperty(_self, "getRawValueAtArrayIndex", {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function (index: number) {
+      return getRawValueAtArrayIndex(index);
+    },
+  });
+
+  Object.defineProperty(_self, "toJSON", {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function () {
+      return arrayToJSON(_self);
     },
   });
 
@@ -801,6 +818,14 @@ export default function ObservableArray(items, onChange, actorId = "") {
     enumerable: false,
     get: function () {
       return _array.filter((value: ArrayValue) => !value.tombstone).length;
+    },
+  });
+
+  Object.defineProperty(_self, "rawLength", {
+    configurable: false,
+    enumerable: false,
+    get: function () {
+      return _array.length;
     },
   });
 

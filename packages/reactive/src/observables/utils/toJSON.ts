@@ -20,30 +20,30 @@ export interface ObjectSerializedValue extends TValue {
  * @param arr array to serialize
  * @returns {ArraySerializedValue[]} serialized array value
  */
-export function serializeArray(arr: typeof ObservableArray) {
+export function arrayToJSON(arr: typeof ObservableArray) {
   const serializedValue: ArraySerializedValue[] = [];
   let value: any;
   // @ts-ignore
-  for (let i = 0; i < arr.rawLength; i++) {
+  for (let i = 0; i < arr.length; i++) {
     // @ts-ignore
-    const arrRawValue: ArraySerializedValue = arr.getRawValue(i);
+    const arrRawValue: ArraySerializedValue = arr.getRawValueAtArrayIndex(i);
     if (arrRawValue.value instanceof ObservableObject) {
       // @ts-ignore
-      value = serializeObject(arrRawValue.value);
+      value = objectToJSON(arrRawValue.value);
     } else if (arrRawValue.value instanceof ObservableArray) {
       // @ts-ignore
-      value = serializeArray(arrRawValue.value);
+      value = arrayToJSON(arrRawValue.value);
     } else {
       arrRawValue.isSerialized = true;
       value = arrRawValue.value;
     }
-    serializedValue.push({ ...arrRawValue, value });
+    serializedValue.push(value);
   }
 
   return serializedValue;
 }
 
-export function serializeObject(object: typeof ObservableObject) {
+export function objectToJSON(object: typeof ObservableObject) {
   const serializedValue = {};
 
   /**
@@ -52,29 +52,21 @@ export function serializeObject(object: typeof ObservableObject) {
    * add as value for key, else get raw representation
    */
   // @ts-ignore
-  object.rawKeys().forEach((key: string) => {
-    console.log("[serialize:object]:serializing key", key);
+  object.keys().forEach((key: string) => {
     // @ts-ignore
     const rawValue: ObjectSerializedValue = object.getRawValue(key);
     let value: any;
-    console.log("[serialize:object]:rawValue", rawValue);
     if (rawValue.value instanceof ObservableArray) {
-      console.log("[serialize:object]:serializing array", rawValue.value);
       // @ts-ignore
-      value = serializeArray(rawValue.value);
-      console.log("[serialize:object]:serializing object", rawValue.value);
+      value = arrayToJSON(rawValue.value);
     } else if (rawValue.value instanceof ObservableObject) {
       // @ts-ignore
-      value = serializeObject(rawValue.value);
+      value = objectToJSON(rawValue.value);
     } else {
-      console.log(
-        "[serialize:object]:value already serialized",
-        rawValue.value
-      );
       rawValue.isSerialized = true;
       value = rawValue.value;
     }
-    serializedValue[key] = { ...rawValue, value };
+    serializedValue[key] = value;
   });
 
   return serializedValue;
