@@ -6,7 +6,7 @@ import { ObservableObject } from "../object/observable-object";
 import { ArraySerializedValue } from "../utils/serialize";
 import { arrayToJSON } from "../utils/toJSON";
 import { Key, KEY_DELTA } from "./key/key";
-import { apply, convertIndexedToCrdtPath } from "./patch/patch";
+import { apply } from "./patch/patch";
 
 const MIN_ARR_VALUE = 0;
 const MAX_ARR_INIT_VALUE = 0.9;
@@ -207,15 +207,23 @@ export default function ObservableArray(items, onChange, actorId = "") {
     },
   });
 
-  function getRawValue(key: string) {
-    return _array[key];
+  function getRawValue(key: string | number) {
+    if (Key.isCrdtKey(key.toString())) {
+      let arrayIndex = crdtIndexToArrayIndex(key.toString());
+      if (arrayIndex === -1) {
+        console.error("No array index for provided CRDT index.", key);
+        return undefined;
+      }
+      return _array[arrayIndex];
+    }
+    return _array[parseInt(key.toString())];
   }
 
   Object.defineProperty(_self, "getRawValue", {
     enumerable: false,
     configurable: false,
     writable: false,
-    value: function (key: string) {
+    value: function (key: string | number) {
       return getRawValue(key);
     },
   });

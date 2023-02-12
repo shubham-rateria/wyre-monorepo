@@ -1,6 +1,8 @@
 import dts from "rollup-plugin-dts";
 import typescript from "@rollup/plugin-typescript";
 import terser from "@rollup/plugin-terser";
+import copy from "rollup-plugin-copy";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
 
 const bundle = (config) => ({
   ...config,
@@ -20,7 +22,7 @@ export default [
       {
         file: `dist/index.js`,
         format: "es",
-        sourcemap: true,
+        sourcemap: false,
       },
     ],
   }),
@@ -29,7 +31,15 @@ export default [
     output: {
       file: `dist/index.d.ts`,
       format: "es",
-      sourcemap: true,
+      sourcemap: false,
     },
   }),
+  {
+    input: "src/queue/input-queue.js",
+    output: {
+      file: "dist/queue/input-queue.js",
+      format: "es",
+    },
+    plugins: [nodeResolve()],
+  },
 ];

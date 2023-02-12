@@ -105,34 +105,34 @@ describe("test end to end sync", () => {
 // });
 
 describe("test sync manager", () => {
-  test("todo:scenario:1", async () => {
-    const sync1 = new _SyncManager();
-    // const sync2 = new _SyncManager();
-    const sync3 = new _SyncManager();
+  // test("todo:scenario:1", async () => {
+  //   const sync1 = new _SyncManager();
+  //   // const sync2 = new _SyncManager();
+  //   const sync3 = new _SyncManager();
 
-    await sync1.init();
-    // await sync2.init();
-    await sync3.init();
+  //   await sync1.init();
+  //   // await sync2.init();
+  //   await sync3.init();
 
-    const data = {
-      todos: [],
-    };
+  //   const data = {
+  //     todos: [],
+  //   };
 
-    const refid = "a-random-refid:1";
+  //   const refid = "a-random-refid:1";
 
-    const data1 = await sync1.create({
-      data,
-      collectionName: "TestCollection",
-      refid,
-      onChange() {},
-    });
+  //   const data1 = await sync1.create({
+  //     data,
+  //     collectionName: "TestCollection",
+  //     refid,
+  //     onChange() {},
+  //   });
 
-    // @ts-ignore
-    data1.todos.push({
-      text: "A New Todo",
-      done: false,
-    });
-  });
+  //   // @ts-ignore
+  //   data1.todos.push({
+  //     text: "A New Todo",
+  //     done: false,
+  //   });
+  // });
   test("1", async () => {
     const sync1 = new _SyncManager();
     // const sync2 = new _SyncManager();
@@ -144,7 +144,7 @@ describe("test sync manager", () => {
     const data = {
       todos: [{ text: "some text", done: false }],
       counter: 1,
-      refid: "a-random-refid-131",
+      refid: "some-refid-here-04",
     };
 
     const data1 = await sync1.create({
@@ -153,18 +153,6 @@ describe("test sync manager", () => {
       refid: data.refid,
       onChange() {},
     });
-    // const data2 = await sync2.create({
-    //   data,
-    //   collectionName: "TestCollection",
-    //   refid: data.refid,
-    //   onChange() {},
-    // });
-
-    // @ts-ignore
-    data1.counter = 10;
-    // @ts-ignore
-    // data2.counter++;
-
     const data3 = await sync3.create({
       data,
       collectionName: "TestCollection",
@@ -172,9 +160,12 @@ describe("test sync manager", () => {
       onChange() {},
     });
 
-    await sleep(2000);
     // @ts-ignore
-    // expect(data2.counter).toBe(data1.counter);
+    data1.counter = 10;
+    // @ts-ignore
+    // data2.counter++;
+
+    await sleep(2000);
     // @ts-ignore
     expect(data3.counter).toBe(data1.counter);
   });

@@ -2,7 +2,6 @@ import { ObservableObject } from "../object/observable-object";
 import ObservableArray, { ArrayValue } from "./observable-array";
 import { TPatch } from "../../types/patch.type";
 import { Key } from "./key/key";
-import { getTokens } from "./patch/patch";
 import { serializeArray, serializeObject } from "../utils/serialize";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

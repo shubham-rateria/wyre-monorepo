@@ -5,6 +5,8 @@ import { TPatch } from "../types/patch.type";
 import { cloneDeep } from "lodash";
 import ObservableArray from "../observables/array/observable-array";
 import isArrayType from "../helpers/isArrayType";
+import { workRunner } from "../queue/input-queue";
+import { evaluate } from "../observables/utils/evaluate";
 
 interface RegisterParams {
   collectionName: string;
@@ -16,6 +18,12 @@ interface RegisterParams {
 export interface ObjectData {
   data: typeof ObservableObject;
   state: State;
+  // inputQueue: Worker;
+}
+
+function fn2workerURL(fn) {
+  const blob = new Blob([`(${fn.toString()})()`], { type: "text/javascript" });
+  return URL.createObjectURL(blob);
 }
 
 type State =
@@ -95,15 +103,27 @@ export class _SyncManager {
   }
 
   async setupPatchListener(
+    inputQueue: any,
     data: typeof ObservableObject,
     onChange: (patch: TPatch) => void,
     roomName: string
   ) {
-    this._io.on("syncPatches:" + roomName, (patch) => {
+    this._io.on("syncPatches:" + roomName, (patch: TPatch) => {
       console.log("[sync:newpatch]", patch);
-      // @ts-ignore
-      data.applyPatch(patch);
-      onChange(patch);
+
+      const { parent, key, value } = evaluate(data, patch.path);
+      const rawValue = parent.getRawValue(key);
+
+      console.log("[worker:sending:data]", patch, rawValue);
+
+      inputQueue.postMessage(patch);
+
+      inputQueue.onmessage = (e: MessageEvent<TPatch>) => {
+        console.log("[worker:message:received]", e.data);
+        // @ts-ignore
+        data.applyPatch(e.data);
+        onChange(e.data);
+      };
     });
   }
 
@@ -133,6 +153,8 @@ export class _SyncManager {
     } else {
       throw new Error(`We do not support ${typeof params.data} yet.`);
     }
+    // const inputQueue = await spawn(new Worker("../queue/input-queue"));
+    const inputQueue = new Worker(fn2workerURL(workRunner));
     this.objects[params.refid] = {
       data: _data,
       state: "CREATED",
@@ -148,7 +170,12 @@ export class _SyncManager {
       _data.setRawValues(syncData);
     }
     this.objects[params.refid].state = "SYNCED";
-    await this.setupPatchListener(_data, params.onChange, params.refid);
+    await this.setupPatchListener(
+      inputQueue,
+      _data,
+      params.onChange,
+      params.refid
+    );
     await this.setupSyncRequestReceiver(params.refid);
     this.objects[params.refid].state = "ONLINE";
     return _data;

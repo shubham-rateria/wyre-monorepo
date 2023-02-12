@@ -1,6 +1,8 @@
 import { Timestamp } from "./../../../lamport/index";
 import { TPatch } from "../../../types/patch.type";
 import { ObservableObject } from "../observable-object";
+import { getTokens } from "../../utils/get-tokens";
+import { evaluate } from "../../utils/evaluate";
 
 export class InvalidOperationError extends Error {
   constructor(public operation: TPatch) {
@@ -17,45 +19,6 @@ interface PointerEvaluation {
 
 function unescape(token: string): string {
   return token.replace(/~1/g, "/").replace(/~0/g, "~");
-}
-
-function getTokens(path: string) {
-  const tokens = path.split("/").map(unescape);
-  if (tokens[0] !== "") throw new Error(`Invalid JSON Pointer: ${path}`);
-  return tokens;
-}
-
-export function evaluate(object: any, path: string): PointerEvaluation {
-  console.log("[evaluate:start]", object, path);
-  const tokens = getTokens(path);
-
-  let parent: any = null;
-  let key = "";
-  let value = object || undefined;
-  for (let i = 1, l = tokens.length; i < l; i++) {
-    console.log("[evaluate:token]", tokens[i]);
-    parent = value;
-
-    key = tokens[i];
-    // if (key == "__proto__" || key == "constructor" || key == "prototype") {
-    //   continue;
-    // }
-    // not sure if this the best way to handle non-existant paths...
-    if (parent) {
-      console.log(
-        "[eval:object:tokens:before:query]",
-        key,
-        typeof parent,
-        value
-      );
-      value = parent[key];
-      console.log("[eval:object:tokens:after:query]", key, parent, value);
-    }
-    // value = (parent || {})[key];
-    console.log("[eval:object:tokens]", tokens[i], parent, value);
-  }
-
-  return { parent, key, value };
 }
 
 function add(object: any, operation: TPatch) {
