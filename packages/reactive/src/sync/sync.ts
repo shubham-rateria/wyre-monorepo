@@ -107,6 +107,10 @@ export class _SyncManager {
     });
   }
 
+  async signalOnline(roomName: string) {
+    this._io.emit("online", roomName);
+  }
+
   async create(params: RegisterParams): Promise<typeof ObservableObject> {
     if (params.refid in this.objects) {
       return this.objects[params.refid].data;
@@ -151,6 +155,7 @@ export class _SyncManager {
     await this.setupPatchListener(_data, params.onChange, params.refid);
     await this.setupSyncRequestReceiver(params.refid);
     this.objects[params.refid].state = "ONLINE";
+    await this.signalOnline(params.refid);
     return _data;
   }
 

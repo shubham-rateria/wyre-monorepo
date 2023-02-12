@@ -32,7 +32,7 @@ export const Todo: React.FC = () => {
       onChange() {
         forceUpdate();
       },
-      refid: "sample-testing-200",
+      refid: "sample-testing-600",
     });
     const data1 = await SyncManager.create({
       data: { todos: [] },
@@ -40,7 +40,7 @@ export const Todo: React.FC = () => {
       onChange() {
         forceUpdate();
       },
-      refid: "sample-testing-1900",
+      refid: "sample-testing-2300",
     });
     setData(data);
     setData1(data1);
