@@ -5,7 +5,7 @@ import App from "./App";
 import { Todo } from "./todo/Todo";
 import reportWebVitals from "./reportWebVitals";
 import { Counter } from "./Counter/Counter";
-import MultipleInputs from "./MultipleInputs/MultipleInputs";
+import { MultipleInputs } from "./MultipleInputs/MultipleInputs";
 import { Dict } from "./Dict/Dict";
 
 const root = ReactDOM.createRoot(
