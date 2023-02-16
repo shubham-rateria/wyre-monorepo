@@ -27,7 +27,12 @@ type TEvent = {
  * @param {Object} object - the object to observe
  * @param {(patch) => void} onChange - triggers when a change on the object happens
  */
-export function ObservableObject(object, onChange, actorId: string = ""): void {
+export function ObservableObject(
+  object,
+  onChange,
+  actorId: string,
+  onSet
+): void {
   var _self = this,
     _object: { [key: string]: TValue } = {},
     _actorId = actorId;
@@ -37,9 +42,19 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
     if (isPrimitiveType(type)) {
       return value;
     } else if (isArrayType(value)) {
-      return new ObservableArray(value, handleNonPrimitiveChildChange(key));
+      return new ObservableArray(
+        value,
+        handleNonPrimitiveChildChange(key),
+        actorId,
+        onSet
+      );
     } else if (type === "object" && value !== null) {
-      return new ObservableObject(value, handleNonPrimitiveChildChange(key));
+      return new ObservableObject(
+        value,
+        handleNonPrimitiveChildChange(key),
+        actorId,
+        onSet
+      );
     } else {
       console.log(`We do not support ${type} yet.`);
     }
@@ -123,7 +138,8 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
         const arr = new ObservableArray(
           [],
           handleNonPrimitiveChildChange(key),
-          _actorId
+          actorId,
+          onSet
         );
         arr.setRawValues(item.value);
         valueToSet = arr;
@@ -137,7 +153,8 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
         const obj = new ObservableObject(
           {},
           handleNonPrimitiveChildChange(key),
-          _actorId
+          actorId,
+          onSet
         );
         obj.setRawValues(item.value);
         valueToSet = obj;
@@ -489,6 +506,8 @@ export function ObservableObject(object, onChange, actorId: string = ""): void {
       };
       onChange(patch);
     }
+
+    onSet();
   }
 
   function handleNonPrimitiveChildChange(childName) {

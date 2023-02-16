@@ -35,7 +35,7 @@ const canWrite = (rawValue: ArrayValue, incomingTimestamp: Timestamp) => {
   return rawValue.timestamp.lessThan(incomingTimestamp);
 };
 
-export default function ObservableArray(items, onChange, actorId = "") {
+export default function ObservableArray(items, onChange, actorId, onSet) {
   var _self = this,
     /**
      * this will always be sorted according to the key value
@@ -159,14 +159,18 @@ export default function ObservableArray(items, onChange, actorId = "") {
       ) {
         const newItem = new ObservableObject(
           {},
-          handleNonPrimitiveChildChange(key.toString())
+          handleNonPrimitiveChildChange(key.toString()),
+          actorId,
+          onSet
         );
         newItem.setRawValues(item.value);
         valueToSet = newItem;
       } else if (Array.isArray(item.value)) {
         const newItem = new ObservableArray(
           [],
-          handleNonPrimitiveChildChange(key.toString())
+          handleNonPrimitiveChildChange(key.toString()),
+          _actorId,
+          onSet
         );
         newItem.setRawValues(item.value);
         valueToSet = newItem;
@@ -431,9 +435,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
       onChange(patch);
     }
 
-    _handlers[event.type].forEach(function (h) {
-      h.call(_self, event);
-    });
+    onSet();
   }
 
   function crdtIndexToArrayIndex(crdtIndex: string) {
@@ -592,7 +594,12 @@ export default function ObservableArray(items, onChange, actorId = "") {
 
       const arrayIndex = crdtIndexToArrayIndex(crdtIndex);
 
-      console.log("[deletevaluefrompatch]", arrayIndex, _array[arrayIndex]);
+      console.log(
+        "[deletevaluefrompatch]",
+        arrayIndex,
+        _array[arrayIndex],
+        crdtIndex
+      );
 
       if (arrayIndex !== -1) {
         const rawValue: ArrayValue = _array[arrayIndex];
@@ -877,9 +884,19 @@ export default function ObservableArray(items, onChange, actorId = "") {
     if (isPrimitiveType(type)) {
       return value;
     } else if (isArrayType(value)) {
-      return new ObservableArray(value, handleNonPrimitiveChildChange(key));
+      return new ObservableArray(
+        value,
+        handleNonPrimitiveChildChange(key),
+        _actorId,
+        onSet
+      );
     } else if (type === "object" && value !== null) {
-      return new ObservableObject(value, handleNonPrimitiveChildChange(key));
+      return new ObservableObject(
+        value,
+        handleNonPrimitiveChildChange(key),
+        actorId,
+        onSet
+      );
     } else {
       console.log(`We do not support ${type} yet.`);
     }
