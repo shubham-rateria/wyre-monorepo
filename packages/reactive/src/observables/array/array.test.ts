@@ -228,6 +228,11 @@ describe("tests for array", () => {
     obs.applyPatch(patch);
     expect(obs.todos[0].done).toBe(true);
   });
+  test("arr:findindextoinsert", () => {
+    const arr = new ObservableArray([1, 2, 3, 4, 5, 6], () => {});
+    const index = arr.findIndexToInsert("$10");
+    expect(index).toBe(1);
+  });
 });
 
 describe("raw values test", () => {
@@ -413,4 +418,46 @@ describe("situational tests", () => {
       const todo1 = obj1.todos[2];
       todo1.done = true;
     });
+});
+
+describe("what happens when patches arrive out of order", () => {
+  test("array:add:unordered", () => {
+    const arr = new ObservableArray([], () => {});
+    const patch1: TPatch = {
+      op: "add",
+      path: "/$10",
+      value: 2,
+      actorId: "",
+      seq: 1,
+    };
+    const patch2: TPatch = {
+      op: "add",
+      path: "/$0",
+      value: 1,
+      actorId: "",
+      seq: 1,
+    };
+    const patch3: TPatch = {
+      op: "add",
+      path: "/$30",
+      value: 4,
+      actorId: "",
+      seq: 1,
+    };
+    const patch4: TPatch = {
+      op: "add",
+      path: "/$20",
+      value: 3,
+      actorId: "",
+      seq: 1,
+    };
+    arr.applyPatch(patch1);
+    arr.applyPatch(patch2);
+    arr.applyPatch(patch3);
+    arr.applyPatch(patch4);
+    expect(arr[0]).toBe(1);
+    expect(arr[1]).toBe(2);
+    expect(arr[2]).toBe(3);
+    expect(arr[3]).toBe(4);
+  });
 });

@@ -67,13 +67,61 @@ export class InvalidOperationError extends Error {
 //     }
 //   }
 
+//       if (patch.op === "replace") {
+//         // @ts-ignore
+//         index = value.crdtIndexToArrayIndex(token);
+//         if (!index) {
+//           throw new Error("could not find index" + token);
+//         }
+//       } else {
+//         // @ts-ignore
+//         index = value.findIndexToInsert(token);
+//       }
+
+//       modPath += "/" + token;
+
+//       /**
+//        * in case of adding to the end,
+//        * the parent[index] will be undefined
+//        */
+//       if (parent[index]) {
+//         value = parent[index].value;
+//       }
+//     } else {
+//       modPath += "/" + token;
+//       value = parent[token];
+//     }
+//   }
+
 //   return modPath;
+// }
+
+// export function evaluate(object: any, path: string): PointerEvaluation {
+//   const tokens = getTokens(path);
+
+//   let parent: any = null;
+//   let key = "";
+//   let value = object || undefined;
+//   for (let i = 0, l = tokens.length; i < l; i++) {
+//     parent = value;
+
+//     key = tokens[i];
+//     if (key == "__proto__" || key == "constructor" || key == "prototype") {
+//       continue;
+//     }
+//     // not sure if this the best way to handle non-existant paths...
+//     value = (parent || {})[key];
+
+//     // console.log("[eval]", typeof parent, parent, typeof value, value);
+//   }
+
+//   return { parent, key, value };
 // }
 
 function add(object: typeof ObservableArray, operation: TPatch) {
   const pointer = evaluate(object, operation.path);
 
-  console.log("[patch:add]", object);
+  // console.log("[patch:add]", object);
 
   // @ts-ignore
   const timestamp = new Timestamp(operation.actorId, operation.seq);
@@ -88,7 +136,7 @@ function add(object: typeof ObservableArray, operation: TPatch) {
 function remove(object: typeof ObservableArray, operation: TPatch) {
   const pointer = evaluate(object, operation.path);
 
-  console.log("[patch:deleting]", pointer, object, operation);
+  // console.log("[patch:deleting]", pointer, object, operation);
 
   // @ts-ignore
   const timestamp = new Timestamp(operation.actorId, operation.seq);
@@ -103,7 +151,7 @@ function remove(object: typeof ObservableArray, operation: TPatch) {
 function replace(object: typeof ObservableArray, operation: TPatch) {
   const pointer = evaluate(object, operation.path);
 
-  console.log("[patch:replacing]", pointer, object, operation);
+  // console.log("[patch:replacing]", pointer, object, operation);
 
   // @ts-ignore
   const timestamp = new Timestamp(operation.actorId, operation.seq);
@@ -123,7 +171,7 @@ export function apply(
   const patch: TPatch = operation;
   patch.path = `/${key}`;
 
-  console.log("[apply]", typeof parent, patch);
+  // console.log("[apply]", typeof parent, patch);
 
   if (parent instanceof ObservableArray) {
     switch (patch.op) {

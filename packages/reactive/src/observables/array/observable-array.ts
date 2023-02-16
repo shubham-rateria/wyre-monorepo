@@ -314,6 +314,13 @@ export default function ObservableArray(items, onChange, actorId = "") {
       const key = Key.fromString(crdtIndex);
       const transformedValue = getValueToSet(key.toString(), value);
 
+      /**
+       * TODO: technically this should never happen that
+       * we have to change a value that has come from an add patch.
+       * Causality says that it should have been created before modified.
+       * This will happen only when we have not seen the add patch
+       * seen replace then seeing add.
+       */
       if (crdtIndexToArrayIndex(crdtIndex) !== -1) {
         const changeIndex = crdtIndexToArrayIndex(crdtIndex);
 
@@ -337,7 +344,8 @@ export default function ObservableArray(items, onChange, actorId = "") {
          * Find index to insert into.
          * Move the other elements by 1
          */
-        const insertIndex: number = _self.findIndexToInsert(key.toString());
+
+        const insertIndex: number = findIndexToInsert(key.toString());
 
         if (insertIndex >= _array.length) {
           _array[insertIndex] = rawValue;
@@ -347,7 +355,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
            */
           const spliced = _array.splice(insertIndex, _array.length);
           _array.push(rawValue);
-          _array.concat(spliced);
+          _array.push(...spliced);
         }
 
         /**
@@ -468,7 +476,7 @@ export default function ObservableArray(items, onChange, actorId = "") {
       return 0;
     }
 
-    let index = 0;
+    let index = -1;
     const compareKey = key instanceof Key ? key : Key.fromString(key);
 
     for (let i = 0; i < _array.length; i++) {
@@ -516,11 +524,11 @@ export default function ObservableArray(items, onChange, actorId = "") {
        *
        */
 
-      console.log("[array:applyPatch]", patch);
+      // console.log("[array:applyPatch]", patch);
 
       const res = apply(_self, patch);
 
-      console.log("[patch:res]", _array);
+      // console.log("[patch:res]", _array);
 
       /**
        * if it an add or remove operation
