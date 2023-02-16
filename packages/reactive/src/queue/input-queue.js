@@ -47,7 +47,7 @@ function InputQueue(processor) {
       }
       setTimeout(() => {
         resolve(null);
-      }, 500);
+      }, 0);
     });
     await consume();
   }

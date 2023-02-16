@@ -121,20 +121,28 @@ export class _SyncManager {
     roomName: string
   ) {
     this._io.on("syncPatches:" + roomName, (patch: TPatch) => {
+      console.time("[time:newpatch]");
       console.log("[sync:newpatch]", patch);
+
+      console.time("[time:evaluate]");
 
       const { parent, key, value } = evaluate(data, patch.path);
       const rawValue = parent.getRawValue(key);
+
+      console.timeEnd("[time:evaluate]");
 
       console.log("[worker:sending:data]", patch, rawValue);
 
       inputQueue.postMessage(patch);
 
       inputQueue.onmessage = (e: MessageEvent<TPatch>) => {
+        console.time("[time:applyPatch]");
         console.log("[worker:message:received]", e.data);
         // @ts-ignore
         data.applyPatch(e.data);
         onChange(e.data);
+        console.timeEnd("[time:applyPatch]");
+        console.timeEnd("[time:newpatch]");
       };
     });
   }
