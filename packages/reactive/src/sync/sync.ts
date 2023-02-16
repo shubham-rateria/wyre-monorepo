@@ -189,4 +189,4 @@ export class _SyncManager {
   };
 }
 
-// export const SyncManager = new _SyncManager();
+export const SyncManager = new _SyncManager();
