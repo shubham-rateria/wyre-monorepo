@@ -1,0 +1,16 @@
+{
+  "name": "@wyre-client/react",
+  "version": "0.2.2",
+  "description": "React bindings for the wyre library.",
+  "private": false,
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rateria",
+  "license": "ISC",
+  "dependencies": {
+    "@wyre-client/core": "workspace:*",
+    "react": "17.0.2"
+  }
+}
