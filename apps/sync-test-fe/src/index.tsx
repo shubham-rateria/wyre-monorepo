@@ -7,14 +7,15 @@ import reportWebVitals from "./reportWebVitals";
 import { Counter } from "./Counter/Counter";
 import { MultipleInputs } from "./MultipleInputs/MultipleInputs";
 import { Dict } from "./Dict/Dict";
+import { Sudoku } from "./Sudoku/Sudoku";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
-  <React.StrictMode>
-    <Todo />
-  </React.StrictMode>
+  // <React.StrictMode>
+  <Sudoku />
+  // </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function
