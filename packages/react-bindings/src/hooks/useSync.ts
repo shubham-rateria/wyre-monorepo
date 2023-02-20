@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SyncManager } from "../../../../packages/core/dist";
+import { SyncManager } from "@wyre-client/core";
 
 interface UseSyncParams {
   data: any;
@@ -31,7 +31,6 @@ export const useSync = (params: UseSyncParams) => {
       onChange,
       onSet,
     });
-    // onChange();
     setData(loadedData);
   };
 

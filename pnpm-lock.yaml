@@ -10,7 +10,6 @@ importers:
 
   apps/sync-test-fe:
     specifiers:
-      '@sam98231/reactive': workspace:*
       '@testing-library/jest-dom': ^5.16.5
       '@testing-library/react': ^13.4.0
       '@testing-library/user-event': ^13.5.0
@@ -18,6 +17,8 @@ importers:
       '@types/node': ^16.18.11
       '@types/react': ^18.0.27
       '@types/react-dom': ^18.0.10
+      '@wyre-client/core': workspace:*
+      '@wyre-client/react': workspace:*
       antd: ^5.1.7
       react: ^18.2.0
       react-dom: ^18.2.0
@@ -25,7 +26,6 @@ importers:
       typescript: ^4.9.4
       web-vitals: ^2.1.4
     dependencies:
-      '@sam98231/reactive': link:../../packages/reactive
       '@testing-library/jest-dom': 5.16.5
       '@testing-library/react': 13.4.0_biqbaboplfbrettd7655fr4n2y
       '@testing-library/user-event': 13.5.0
@@ -33,6 +33,8 @@ importers:
       '@types/node': 16.18.11
       '@types/react': 18.0.27
       '@types/react-dom': 18.0.10
+      '@wyre-client/core': link:../../packages/core
+      '@wyre-client/react': link:../../packages/react-bindings
       antd: 5.1.7_biqbaboplfbrettd7655fr4n2y
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -40,7 +42,7 @@ importers:
       typescript: 4.9.4
       web-vitals: 2.1.4
 
-  packages/reactive:
+  packages/core:
     specifiers:
       '@rollup/plugin-terser': ^0.4.0
       '@rollup/plugin-typescript': ^11.0.0
@@ -77,11 +79,13 @@ importers:
       ts-jest: 29.0.5_ohkovfv5y45i4ruuysfy4h5eb4
       typescript: 4.9.4
 
-  packages/test-reactive:
+  packages/react-bindings:
     specifiers:
-      '@sam98231/reactive': workspace:*
+      '@wyre-client/core': workspace:*
+      react: 17.0.2
     dependencies:
-      '@sam98231/reactive': link:../reactive
+      '@wyre-client/core': link:../core
+      react: 17.0.2
 
 packages:
 
@@ -4004,7 +4008,7 @@ packages:
   /@types/graceful-fs/4.1.6:
     resolution: {integrity: sha512-Sig0SNORX9fdW+bQuTEovKj3uHcUL6LQKbCrrqb1X7J6/ReAbhCXRAhc+SMejhLELFj2QcyuxmUooZ4bt5ReSw==}
     dependencies:
-      '@types/node': 16.18.11
+      '@types/node': 18.11.18
 
   /@types/html-minifier-terser/6.1.0:
     resolution: {integrity: sha512-oh/6byDPnL1zeNXFrDXFLyZjkr1MsBG667IM792caf1L2UPOOMf65NFzjUH/ltyfwjAGfs1rsX1eftK0jC/KIg==}
@@ -4061,10 +4065,10 @@ packages:
 
   /@types/node/16.18.11:
     resolution: {integrity: sha512-3oJbGBUWuS6ahSnEq1eN2XrCyf4YsWI8OyCvo7c64zQJNplk3mO84t53o8lfTk+2ji59g5ycfc6qQ3fdHliHuA==}
+    dev: false
 
   /@types/node/18.11.18:
     resolution: {integrity: sha512-DHQpWGjyQKSHj3ebjFI/wRKcqQcdR+MoFBygntYOZytCqNfkd2ZC4ARDJ2DQqhjH5p85Nnd3jhUJIXrszFX/JA==}
-    dev: true
 
   /@types/normalize-package-data/2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
@@ -12753,6 +12757,14 @@ packages:
       - webpack-cli
       - webpack-hot-middleware
       - webpack-plugin-serve
+    dev: false
+
+  /react/17.0.2:
+    resolution: {integrity: sha512-gnhPt75i/dq/z3/6q/0asP78D0u592D5L1pd7M8P+dck6Fu/jJeL6iVVK23fptSUZj8Vjf++7wXA8UNclGQcbA==}
+    engines: {node: '>=0.10.0'}
+    dependencies:
+      loose-envify: 1.4.0
+      object-assign: 4.1.1
     dev: false
 
   /react/18.2.0:
