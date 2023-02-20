@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SyncManager } from "../../../../packages/core/dist";
+import { SyncManager } from "@wyre-client/core";
 
 interface UseSyncParams {
   data: any;
