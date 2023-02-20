@@ -22,17 +22,31 @@ type TEvent = {
   timestamp: TimestampValue;
 };
 
+interface ObservableObjectParams {
+  object: any;
+  emitPatch: (patch: TPatch) => void;
+  actorId: string;
+  collectionName: string;
+
+  /**
+   * onChange will trigger when either I have changed a value,
+   * or when another user has overwritten my value
+   */
+  onChange: (patch?: TPatch) => void;
+}
+
 /**
  * ObservableObject
  * @param {Object} object - the object to observe
  * @param {(patch) => void} onChange - triggers when a change on the object happens
  */
-export function ObservableObject(
+export function ObservableObject({
   object,
+  emitPatch,
+  actorId,
+  collectionName,
   onChange,
-  actorId: string,
-  onSet
-): void {
+}: ObservableObjectParams): void {
   var _self = this,
     _object: { [key: string]: TValue } = {},
     _actorId = actorId;
@@ -42,19 +56,27 @@ export function ObservableObject(
     if (isPrimitiveType(type)) {
       return value;
     } else if (isArrayType(value)) {
-      return new ObservableArray(
-        value,
-        handleNonPrimitiveChildChange(key),
+      // return new ObservableArray(
+      //   value,
+      //   handleNonPrimitiveChildChange(key),
+      //   actorId,
+      //   onSet
+      // );
+      return new ObservableArray({
         actorId,
-        onSet
-      );
+        collectionName,
+        items: value,
+        emitPatch: handleNonPrimitiveChildChange(key),
+        onChange,
+      });
     } else if (type === "object" && value !== null) {
-      return new ObservableObject(
-        value,
-        handleNonPrimitiveChildChange(key),
+      return new ObservableObject({
+        object: value,
         actorId,
-        onSet
-      );
+        collectionName,
+        emitPatch: handleNonPrimitiveChildChange(key),
+        onChange,
+      });
     } else {
       console.log(`We do not support ${type} yet.`);
     }
@@ -135,12 +157,19 @@ export function ObservableObject(
       console.log("[setrawvalues:object:1]", item, timestamp);
 
       if (Array.isArray(item.value)) {
-        const arr = new ObservableArray(
-          [],
-          handleNonPrimitiveChildChange(key),
+        // const arr = new ObservableArray(
+        //   [],
+        //   handleNonPrimitiveChildChange(key),
+        //   actorId,
+        //   onSet
+        // );
+        const arr = new ObservableArray({
           actorId,
-          onSet
-        );
+          collectionName,
+          items: [],
+          emitPatch: handleNonPrimitiveChildChange(key),
+          onChange,
+        });
         arr.setRawValues(item.value);
         valueToSet = arr;
         console.log("[setrawvalues:object:setting array value]", arr);
@@ -150,12 +179,19 @@ export function ObservableObject(
         item.value !== null &&
         !item.isSerialized
       ) {
-        const obj = new ObservableObject(
-          {},
-          handleNonPrimitiveChildChange(key),
+        // const obj = new ObservableObject(
+        //   {},
+        //   handleNonPrimitiveChildChange(key),
+        //   actorId,
+        //   onSet
+        // );
+        const obj = new ObservableObject({
           actorId,
-          onSet
-        );
+          emitPatch: handleNonPrimitiveChildChange(key),
+          collectionName,
+          object: {},
+          onChange,
+        });
         obj.setRawValues(item.value);
         valueToSet = obj;
         console.log("[setrawvalues:object:setting object value]", obj);
@@ -260,6 +296,7 @@ export function ObservableObject(
         _object[key].value = transformedValue;
         _object[key].tombstone = false;
         _object[key].isPrimitive = isPrimitiveType(value) || false;
+        onChange();
       }
     } else {
       const objValue: TValue = {
@@ -270,6 +307,7 @@ export function ObservableObject(
       };
       _object[key] = objValue;
       defineKeyProperty(key);
+      onChange();
     }
 
     console.log(
@@ -306,7 +344,8 @@ export function ObservableObject(
      * then I will update my timestamp to match yours.
      * This will ensure that if multiple users delete
      * a value at the same time, the timestamps will
-     * still be in sync
+     * still be in sync. Since delete is sacrosant, we
+     * delete value irrespective of my timestamp.
      */
 
     if (value.timestamp.lessThan(timestamp)) {
@@ -314,6 +353,8 @@ export function ObservableObject(
     }
 
     _object[key].tombstone = true;
+
+    onChange();
   }
 
   Object.defineProperty(_self, "deleteKeyFromPatch", {
@@ -475,45 +516,46 @@ export function ObservableObject(
      * onChange with the patch
      */
     if (event.type === "itemchanged") {
-      const patch = {
+      const patch: TPatch = {
         op: "replace",
         path: event.path,
         value: event.value,
         actorId: event.timestamp.actorId,
         seq: event.timestamp.seq,
       };
+      emitPatch(patch);
       onChange(patch);
     }
 
     if (event.type === "itemadded") {
-      const patch = {
+      const patch: TPatch = {
         op: "add",
         path: event.path,
         value: event.value,
         actorId: event.timestamp.actorId,
         seq: event.timestamp.seq,
       };
+      emitPatch(patch);
       onChange(patch);
     }
 
     if (event.type === "itemdeleted") {
-      const patch = {
+      const patch: TPatch = {
         op: "remove",
         path: event.path,
         value: event.value,
         actorId: event.timestamp.actorId,
         seq: event.timestamp.seq,
       };
+      emitPatch(patch);
       onChange(patch);
     }
-
-    onSet();
   }
 
   function handleNonPrimitiveChildChange(childName) {
     return (patch) => {
       patch.path = `/${childName}${patch.path}`;
-      onChange(patch);
+      emitPatch(patch);
     };
   }
 

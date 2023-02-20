@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 import { ObservableObject } from "../observables/object/observable-object";
-import { serializeObject } from "../observables/utils/serialize";
+import { serialize, serializeObject } from "../observables/utils/serialize";
 import { TPatch } from "../types/patch.type";
 import { cloneDeep } from "lodash";
 import ObservableArray from "../observables/array/observable-array";
@@ -10,8 +10,7 @@ interface RegisterParams {
   collectionName: string;
   refid: string;
   data: any;
-  onChange: (patch: TPatch) => void;
-  onSet: () => void;
+  onChange: (patch?: TPatch) => void;
 }
 
 interface DestroyParams {
@@ -19,7 +18,7 @@ interface DestroyParams {
 }
 
 export interface ObjectData {
-  data: typeof ObservableObject;
+  data: typeof ObservableObject | typeof ObservableArray;
   state: State;
 }
 
@@ -101,14 +100,14 @@ export class _SyncManager {
         );
         this._io.emit("sync:no-sync", roomName, socketId);
       }
-      const data = serializeObject(this.objects[roomName].data);
+      const data = serialize(this.objects[roomName].data);
       this._io.emit("sync:response:" + roomName, data, socketId);
       console.log("[sync:request] sent", data, "sync:response:" + roomName);
     });
   }
 
   async setupPatchListener(
-    data: typeof ObservableObject,
+    data: typeof ObservableObject | typeof ObservableArray,
     onChange: (patch: TPatch) => void,
     roomName: string
   ) {
@@ -131,7 +130,9 @@ export class _SyncManager {
     this._io.emit("destroy", params.refid);
   }
 
-  async create(params: RegisterParams): Promise<typeof ObservableObject> {
+  async create(
+    params: RegisterParams
+  ): Promise<typeof ObservableObject | typeof ObservableArray> {
     if (params.refid in this.objects) {
       return this.objects[params.refid].data;
     }
@@ -143,19 +144,27 @@ export class _SyncManager {
     let _data: typeof ObservableArray | typeof ObservableObject;
 
     if (isArrayType(params.data)) {
-      _data = new ObservableArray(
-        params.data,
-        this.getPatchSendHandler(params.refid, params.collectionName),
-        this.socketId,
-        params.onSet
-      );
+      _data = new ObservableArray({
+        items: params.data,
+        emitPatch: this.getPatchSendHandler(
+          params.refid,
+          params.collectionName
+        ),
+        actorId: this.socketId,
+        collectionName: params.collectionName,
+        onChange: params.onChange,
+      });
     } else if (typeof params.data === "object" && params.data !== null) {
-      _data = new ObservableObject(
-        params.data,
-        this.getPatchSendHandler(params.refid, params.collectionName),
-        this.socketId,
-        params.onSet
-      );
+      _data = new ObservableObject({
+        object: params.data,
+        emitPatch: this.getPatchSendHandler(
+          params.refid,
+          params.collectionName
+        ),
+        actorId: this.socketId,
+        collectionName: params.collectionName,
+        onChange: params.onChange,
+      });
     } else {
       throw new Error(`We do not support ${typeof params.data} yet.`);
     }

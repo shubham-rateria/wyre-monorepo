@@ -35,7 +35,26 @@ const canWrite = (rawValue: ArrayValue, incomingTimestamp: Timestamp) => {
   return rawValue.timestamp.lessThan(incomingTimestamp);
 };
 
-export default function ObservableArray(items, onChange, actorId, onSet) {
+interface ObservableArrayParams {
+  items: any;
+  emitPatch: (patch: TPatch) => void;
+  actorId: string;
+  collectionName: string;
+
+  /**
+   * onChange will trigger when either I have changed a value,
+   * or when another user has overwritten my value
+   */
+  onChange: (patch?: TPatch) => void;
+}
+
+export default function ObservableArray({
+  items,
+  emitPatch,
+  actorId,
+  collectionName,
+  onChange,
+}: ObservableArrayParams) {
   var _self = this,
     /**
      * this will always be sorted according to the key value
@@ -157,21 +176,35 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
         item.value !== null &&
         !item.isSerialized
       ) {
-        const newItem = new ObservableObject(
-          {},
-          handleNonPrimitiveChildChange(key.toString()),
+        // const newItem = new ObservableObject(
+        //   {},
+        //   handleNonPrimitiveChildChange(key.toString()),
+        //   actorId,
+        //   onSet
+        // );
+        const newItem = new ObservableObject({
+          object: {},
+          emitPatch: handleNonPrimitiveChildChange(key.toString()),
           actorId,
-          onSet
-        );
+          collectionName,
+          onChange,
+        });
         newItem.setRawValues(item.value);
         valueToSet = newItem;
       } else if (Array.isArray(item.value)) {
-        const newItem = new ObservableArray(
-          [],
-          handleNonPrimitiveChildChange(key.toString()),
-          _actorId,
-          onSet
-        );
+        // const newItem = new ObservableArray(
+        //   [],
+        //   handleNonPrimitiveChildChange(key.toString()),
+        //   _actorId,
+        //   onSet
+        // );
+        const newItem = new ObservableArray({
+          items: [],
+          emitPatch: handleNonPrimitiveChildChange(key.toString()),
+          actorId,
+          collectionName,
+          onChange,
+        });
         newItem.setRawValues(item.value);
         valueToSet = newItem;
       } else {
@@ -274,6 +307,7 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
       if (rawValue && canWrite(rawValue, timestamp) && !rawValue.tombstone) {
         rawValue.value = transformedValue;
         rawValue.timestamp = timestamp;
+        onChange();
       }
     },
   });
@@ -326,6 +360,7 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
           rawValue.value = transformedValue;
           rawValue.timestamp = timestamp;
           rawValue.tombstone = false;
+          onChange();
         }
       } else {
         const rawValue: ArrayValue = {
@@ -345,6 +380,7 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
 
         if (insertIndex >= _array.length) {
           _array[insertIndex] = rawValue;
+          onChange();
         } else {
           /**
            * Move all elements after index
@@ -352,6 +388,7 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
           const spliced = _array.splice(insertIndex, _array.length);
           _array.push(rawValue);
           _array.push(...spliced);
+          onChange();
         }
 
         /**
@@ -408,6 +445,7 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
       };
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
+      emitPatch(patch);
       onChange(patch);
     }
     if (event.type === "itemadded") {
@@ -420,6 +458,7 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
       };
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
+      emitPatch(patch);
       onChange(patch);
     }
     if (event.type === "itemdeleted") {
@@ -432,10 +471,9 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
       };
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
+      emitPatch(patch);
       onChange(patch);
     }
-
-    onSet();
   }
 
   function crdtIndexToArrayIndex(crdtIndex: string) {
@@ -617,6 +655,8 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
         }
 
         _array[arrayIndex].tombstone = true;
+
+        onChange();
       }
     },
   });
@@ -875,7 +915,7 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
   function handleNonPrimitiveChildChange(childName) {
     return (patch) => {
       patch.path = `/${childName}${patch.path}`;
-      onChange(patch);
+      emitPatch(patch);
     };
   }
 
@@ -884,19 +924,33 @@ export default function ObservableArray(items, onChange, actorId, onSet) {
     if (isPrimitiveType(type)) {
       return value;
     } else if (isArrayType(value)) {
-      return new ObservableArray(
-        value,
-        handleNonPrimitiveChildChange(key),
-        _actorId,
-        onSet
-      );
-    } else if (type === "object" && value !== null) {
-      return new ObservableObject(
-        value,
-        handleNonPrimitiveChildChange(key),
+      // return new ObservableArray(
+      //   value,
+      //   handleNonPrimitiveChildChange(key),
+      //   _actorId,
+      //   onSet
+      // );
+      return new ObservableArray({
+        items: value,
+        emitPatch: handleNonPrimitiveChildChange(key),
         actorId,
-        onSet
-      );
+        collectionName,
+        onChange,
+      });
+    } else if (type === "object" && value !== null) {
+      // return new ObservableObject(
+      //   value,
+      //   handleNonPrimitiveChildChange(key),
+      //   actorId,
+      //   onSet
+      // );
+      return new ObservableObject({
+        actorId,
+        collectionName,
+        object: value,
+        emitPatch: handleNonPrimitiveChildChange(key),
+        onChange,
+      });
     } else {
       console.log(`We do not support ${type} yet.`);
     }

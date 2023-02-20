@@ -16,6 +16,23 @@ export interface ObjectSerializedValue extends TValue {
 }
 
 /**
+ * Checks the type of data to be serialized and calls the
+ * desired function
+ * @param data ObservableArray | ObservableObject
+ */
+export function serialize(
+  data: typeof ObservableArray | typeof ObservableObject
+) {
+  if (data instanceof ObservableObject) {
+    // @ts-ignore
+    return serializeObject(data);
+  } else if (data instanceof ObservableArray) {
+    // @ts-ignore
+    return serializeArray(data);
+  }
+}
+
+/**
  * Serializes array value
  * @param arr array to serialize
  * @returns {ArraySerializedValue[]} serialized array value
