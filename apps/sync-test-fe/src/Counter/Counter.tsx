@@ -1,60 +1,58 @@
-// import React from "react";
-// import { _SyncManager } from "@sam98231/reactive";
-// import { InputNumber } from "antd";
+import React from "react";
+import { useSync } from "../hooks/useSync";
+import { InputNumber } from "antd";
+import styles from "./Counter.module.css";
 
-// const SyncManager = new _SyncManager();
+type SyncData = { counter: number };
 
-// function useForceUpdate() {
-//   const [value, setValue] = React.useState(0);
-//   return () => setValue((value) => value + 1);
-// }
-
-// export const Counter = () => {
-//   const forceUpdate = useForceUpdate();
-//   const [loaded, setLoaded] = React.useState(false);
-//   const [data, setData] = React.useState<any>([]);
-
-//   const load = async () => {
-//     setLoaded(false);
-//     await SyncManager.init();
-//     const data = await SyncManager.create({
-//       data: { counter: 0 },
-//       collectionName: "Todo",
-//       onChange() {
-//         forceUpdate();
-//       },
-//       refid: "sample-testing-14",
-//     });
-//     setData(data);
-//     console.log("loaded data", data);
-//     setLoaded(true);
-//   };
-
-//   const changeInputNumberVal = (value: number) => {
-//     data.counter = value;
-//     forceUpdate();
-//   };
-
-//   React.useEffect(() => {
-//     load();
-//   }, []);
-
-//   if (!loaded) {
-//     return <div>loading</div>;
-//   }
-
-//   return (
-//     <InputNumber
-//       min={0}
-//       max={100}
-//       value={data.counter}
-//       onChange={(val) => {
-//         changeInputNumberVal(val);
-//       }}
-//     />
-//   );
-// };
+const initialState: SyncData = {
+  counter: 0,
+};
 
 export const Counter = () => {
-  return <></>;
+  const [loaded, setLoaded] = React.useState(false);
+  const [data, setData] = React.useState<SyncData>(initialState);
+
+  const sync = useSync({
+    data: initialState,
+    collectionName: "Counter",
+    id: "counter1",
+  });
+
+  const load = async () => {
+    setLoaded(false);
+    const loadedData = await sync.init();
+    setData(loadedData);
+    setLoaded(true);
+  };
+
+  const changeInputNumberVal = (value: number) => {
+    data.counter = value;
+  };
+
+  React.useEffect(() => {
+    load();
+  }, []);
+
+  if (!loaded) {
+    return <div>loading</div>;
+  }
+
+  return (
+    <div className={styles.Container}>
+      <h3>Basic Counter</h3>
+      <InputNumber
+        min={0}
+        max={100}
+        value={data.counter}
+        onChange={(val) => {
+          if (val) {
+            changeInputNumberVal(val);
+          } else {
+            changeInputNumberVal(0);
+          }
+        }}
+      />
+    </div>
+  );
 };
