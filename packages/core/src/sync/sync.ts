@@ -11,6 +11,7 @@ interface RegisterParams {
   refid: string;
   data: any;
   onChange: (patch?: TPatch) => void;
+  name?: string;
 }
 
 interface DestroyParams {
@@ -31,12 +32,18 @@ type State =
   | "ONLINE"
   | "OFFLINE";
 
+type UserDetails = {
+  name: string;
+  socketId: string;
+};
+
 export class _SyncManager {
-  socketEndpoint = "http://api.wyre.live:3002";
+  socketEndpoint = "http://localhost:3002";
   socketConfig = { path: "/socket.io" };
-  _io = io(this.socketEndpoint, this.socketConfig);
+  public _io = io(this.socketEndpoint, this.socketConfig);
   socketId: string = "";
   objects: { [refid: string]: ObjectData } = {};
+  peopleInRoom: { [refid: string]: UserDetails[] } = {};
 
   async init() {
     this.socketId = await this.getSocketId();
@@ -50,12 +57,22 @@ export class _SyncManager {
     });
   }
 
-  async register(roomName: string): Promise<void> {
+  async register(roomName: string, name: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      this._io.emit("register", roomName);
+      this._io.emit("register", roomName, name);
       this._io.on("registerAck:" + roomName, () => {
         console.log("[register]:ack", roomName);
         resolve();
+      });
+    });
+  }
+
+  async getUsersInRoom(roomName: string): Promise<UserDetails[]> {
+    return new Promise((resolve, reject) => {
+      this._io.emit("room:users", roomName);
+      this._io.on("room:users:" + roomName, (usersInRoom) => {
+        console.log("room:users:" + roomName, usersInRoom);
+        resolve(usersInRoom);
       });
     });
   }
@@ -113,6 +130,15 @@ export class _SyncManager {
   ) {
     this._io.on("syncPatches:" + roomName, (patch) => {
       console.log("[sync:newpatch]", patch);
+
+      if (patch.path === "/PEOPLE_IN_ROOM") {
+        if (!(patch.refid in this.peopleInRoom)) {
+          this.peopleInRoom[patch.refid] = [patch.value];
+        } else {
+          this.peopleInRoom[patch.refid].push(patch.value);
+        }
+      }
+
       // @ts-ignore
       data.applyPatch(patch);
       onChange(patch);
@@ -128,6 +154,14 @@ export class _SyncManager {
       delete this.objects[params.refid];
     }
     this._io.emit("destroy", params.refid);
+  }
+
+  async setupEventListener(eventName: string, callback: (data: any) => void) {
+    console.log("setting up event listener", eventName);
+    this._io.on(eventName, (data) => {
+      console.log("[event:received]", eventName, data);
+      callback(data);
+    });
   }
 
   async create(
@@ -173,7 +207,7 @@ export class _SyncManager {
       state: "CREATED",
     };
     this.objects[params.refid].state = "REGISTERING";
-    await this.register(params.refid);
+    await this.register(params.refid, params.name || "");
     this.objects[params.refid].state = "REGISTERED";
     this.objects[params.refid].state = "SYNCING";
     const syncData = await this.sync(params.refid);
