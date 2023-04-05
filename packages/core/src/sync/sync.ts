@@ -45,6 +45,10 @@ export class _SyncManager {
   objects: { [refid: string]: ObjectData } = {};
   peopleInRoom: { [refid: string]: UserDetails[] } = {};
 
+  constructor() {
+    this.init();
+  }
+
   async init() {
     this.socketId = await this.getSocketId();
   }
@@ -228,6 +232,7 @@ export class _SyncManager {
     const patchSendHandler = async (patch: TPatch) => {
       patch.refid = roomName;
       patch.collectionName = collectionName;
+      patch.actorId = this._io.id;
       console.log("[patchemit]", patch);
       this._io.emit("patch", patch);
     };

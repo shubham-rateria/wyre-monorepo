@@ -12,10 +12,10 @@ const bundle = (config) => ({
 export default [
   bundle({
     plugins: [
-      strip({
-        include: ["**/*.(mjs|js|ts)"],
-        functions: ["console.log"],
-      }),
+      // strip({
+      //   include: ["**/*.(mjs|js|ts)"],
+      //   functions: ["console.log"],
+      // }),
       typescript({
         exclude: ["**/__tests__", "**/*.test.ts"],
       }),
