@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SyncManager } from "@wyre-client/core";
 import { debounce } from "lodash";
 
@@ -28,14 +28,29 @@ const getRandomColor = () => {
   return color;
 };
 
+let loadedData: any;
+let userName: string;
+
 export const usePresence = () => {
   const [value, setValue] = useState(0);
-  const [loadedData, setLoadedData] = useState(null);
+  // const [loadedData, setLoadedData] = useState(null);
   const id = useMemo(() => SyncManager._io.id, [SyncManager._io.connected]);
 
   const onChange = (patch: any) => {
     setValue((value) => value + 1);
   };
+
+  const onConnect = useCallback(() => {
+    const myDetails = {
+      name: userName,
+      mousePosition: [window.screen.width / 2, window.screen.height / 2],
+      mouseState: "up",
+      userColor: getRandomColor(),
+    };
+    console.log("[onConnect]", myDetails, loadedData);
+    // @ts-ignore
+    loadedData?.users.insert(id, myDetails);
+  }, [loadedData]);
 
   const removeSelf = () => {
     // @ts-ignore
@@ -46,22 +61,26 @@ export const usePresence = () => {
     roomId: string,
     name?: string
   ) => {
-    const loadedData: any = await SyncManager.create({
+    userName = name || "";
+    loadedData = await SyncManager.create({
       data: INITIAL_ROOM_DATA,
       collectionName: "",
       refid: roomId,
       onChange,
       name: name || "",
+      onConnect: onConnect,
     });
-    setLoadedData(loadedData);
+
     const myDetails = {
       name,
       mousePosition: [window.screen.width / 2, window.screen.height / 2],
       mouseState: "up",
       userColor: getRandomColor(),
     };
-    loadedData.users.insert(id, myDetails);
+    // @ts-ignore
+    loadedData?.users.insert(id, myDetails);
 
+    // setLoadedData(loadedData);
     // const usersInRoom = await SyncManager.getUsersInRoom(roomId);
 
     // usersInRoom.forEach((user) => {
@@ -77,10 +96,18 @@ export const usePresence = () => {
     //   } catch (error) {}
     // });
 
-    SyncManager.setupEventListener("room:user:remove:" + roomId, (data) => {
+    SyncManager.setupEventListener("room:user:add:" + roomId, (data: any) => {
       loadedData.users.delete(data.socketId);
       setValue((value) => value + 1);
     });
+
+    SyncManager.setupEventListener(
+      "room:user:remove:" + roomId,
+      (data: any) => {
+        loadedData.users.delete(data.socketId);
+        setValue((value) => value + 1);
+      }
+    );
 
     // setup listeners for my mouse position move
 

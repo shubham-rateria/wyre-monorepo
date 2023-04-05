@@ -12,6 +12,7 @@ interface RegisterParams {
   data: any;
   onChange: (patch?: TPatch) => void;
   name?: string;
+  onConnect?: () => void;
 }
 
 interface DestroyParams {
@@ -21,6 +22,8 @@ interface DestroyParams {
 export interface ObjectData {
   data: typeof ObservableObject | typeof ObservableArray;
   state: State;
+  onChange: (patch?: TPatch) => void;
+  onConnect?: () => void;
 }
 
 type State =
@@ -38,7 +41,7 @@ type UserDetails = {
 };
 
 export class _SyncManager {
-  socketEndpoint = "http://192.168.0.108:3002";
+  socketEndpoint = "http://172.20.10.3:3002";
   socketConfig = { path: "/socket.io" };
   public _io = io(this.socketEndpoint, this.socketConfig);
   socketId: string = "";
@@ -56,6 +59,26 @@ export class _SyncManager {
   async getSocketId(): Promise<string> {
     return new Promise((resolve, reject) => {
       this._io.on("connect", () => {
+        /**
+         * resync all objects
+         */
+        Object.keys(this.objects).forEach(async (id: string) => {
+          this.objects[id].state = "REGISTERING";
+          await this.register(id, "");
+          this.objects[id].state = "REGISTERED";
+          this.objects[id].state = "SYNCING";
+          const syncData = await this.sync(id);
+          if (syncData) {
+            // @ts-ignore
+            this.objects[id].data.setRawValues(syncData);
+            this.objects[id].onChange();
+          }
+          if (this.objects[id].onConnect) {
+            // @ts-ignore
+            this.objects[id].onConnect();
+          }
+        });
+
         resolve(this._io.id);
       });
     });
@@ -209,6 +232,8 @@ export class _SyncManager {
     this.objects[params.refid] = {
       data: _data,
       state: "CREATED",
+      onChange: params.onChange,
+      onConnect: params.onConnect,
     };
     this.objects[params.refid].state = "REGISTERING";
     await this.register(params.refid, params.name || "");
@@ -225,7 +250,7 @@ export class _SyncManager {
     await this.setupSyncRequestReceiver(params.refid);
     this.objects[params.refid].state = "ONLINE";
     await this.signalReadyForRoom(params.refid);
-    return _data;
+    return this.objects[params.refid].data;
   }
 
   getPatchSendHandler = (roomName: string, collectionName: string) => {

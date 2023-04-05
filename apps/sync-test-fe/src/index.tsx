@@ -7,7 +7,6 @@ import reportWebVitals from "./reportWebVitals";
 import { Counter } from "./Counter/Counter";
 import { MultipleInputs } from "./MultipleInputs/MultipleInputs";
 import { Dict } from "./Dict/Dict";
-import { Sudoku } from "./Sudoku/Sudoku";
 import { Presence } from "./Presence/Presence";
 
 const root = ReactDOM.createRoot(
