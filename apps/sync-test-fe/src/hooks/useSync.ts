@@ -29,6 +29,11 @@ export const useSync = (params: UseSyncParams) => {
     }
   };
 
+  /**
+   *
+   * @param id the unique identifier for the data
+   * @returns a javascript object that is real time and shared
+   */
   const init: (id: string) => Promise<any> = async (id: string) => {
     console.log("[useSync:init]");
     setId(id);
