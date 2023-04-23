@@ -4,7 +4,8 @@ import Modal from "antd/es/modal/Modal";
 import React, { useState } from "react";
 import { Cursor } from "../components/Cursor/Cursor";
 import { usePresence } from "../hooks/usePresence";
-import { useSync } from "../hooks/useSync";
+// import { useSync } from "../hooks/useSync";
+import { useSync } from "@wyre-client/core";
 import { getInitials } from "../utils/get-initials";
 import "./Todo.css";
 
@@ -87,6 +88,9 @@ export const Todo: React.FC = () => {
      *
      */
     const presenceDetails = await presence.init("todopresence", name);
+    presence.add({
+      name,
+    });
     setPresenceDetails(presenceDetails);
     setData(data);
     setLoaded(true);
