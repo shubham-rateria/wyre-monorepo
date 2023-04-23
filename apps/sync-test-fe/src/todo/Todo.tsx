@@ -1,7 +1,12 @@
-import { Button, Col, Input, Row, Space } from "antd";
+// @ts-nocheck
+import { Avatar, Button, Col, Input, Row, Space } from "antd";
 import Modal from "antd/es/modal/Modal";
-import React from "react";
-import { useSync } from "../hooks/useSync";
+import React, { useState } from "react";
+import { Cursor } from "../components/Cursor/Cursor";
+import { usePresence } from "../hooks/usePresence";
+// import { useSync } from "../hooks/useSync";
+import { useSync } from "@wyre-client/core";
+import { getInitials } from "../utils/get-initials";
 import "./Todo.css";
 
 type Todo = {
@@ -22,30 +27,74 @@ const TICKED_STYLE = {
 };
 
 export const Todo: React.FC = () => {
-  const [loaded, setLoaded] = React.useState(true);
-  const [data, setData] = React.useState<SyncData>(initialData);
-  const [newTodoText, setNewTodoText] = React.useState("");
-  const [roomLoaded, setRoomLoaded] = React.useState(false);
-  const [roomName, setRoomName] = React.useState(
-    Math.random().toString(36).slice(2)
-  );
+  /**
+   * have we loaded everything?
+   */
+  const [loaded, setLoaded] = useState(true);
 
+  /**
+   * real time collaborative data
+   */
+  const [data, setData] = useState<SyncData>(initialData);
+
+  /**
+   * users presence details
+   */
+  const [presenceDetails, setPresenceDetails] = useState<any>(null);
+
+  /**
+   * text for a new todo
+   */
+  const [newTodoText, setNewTodoText] = useState("");
+
+  /**
+   * Has the user entered details
+   */
+  const [detailsEntered, setDetailsEntered] = useState(false);
+
+  /**
+   * The id of this todo list
+   */
+  const [todoId, setTodoId] = useState("");
+
+  /**
+   * Your name
+   */
+  const [name, setName] = useState("");
+
+  /**
+   * This is where the magic happens
+   */
   const sync = useSync({
     data: initialData,
-    collectionName: "Todo",
-    id: "todos1",
   });
+  const presence = usePresence();
 
   const load = async () => {
     setLoaded(false);
-    const loadedData = await sync.init(roomName);
-    setData(loadedData);
+    const data = await sync.init(todoId);
+
+    /**
+     * interface IUserDetails {
+     *  mousePosition: number[];
+     *  mouseState: MOUSE_STATE;
+     *  name: string;
+     *  userColor: string;
+     * }
+     *
+     * interface IRoomData {
+     *  users: { userId: IUserDetails }
+     * }
+     *
+     */
+    const presenceDetails = await presence.init("todopresence", name);
+    presence.add({
+      name,
+    });
+    setPresenceDetails(presenceDetails);
+    setData(data);
     setLoaded(true);
   };
-
-  // React.useEffect(() => {
-  //   load();
-  // }, []);
 
   const addNewTodo = () => {
     data.todos.push({
@@ -64,12 +113,8 @@ export const Todo: React.FC = () => {
   };
 
   const handleTodoDelete = (todo: Todo) => {
-    const index = data.todos.indexOf(
-      // @ts-ignore
-      (_todo: Todo) => _todo.text === todo.text
-    );
+    const index = data.todos.indexOf((_todo: Todo) => _todo.text === todo.text);
     if (index !== -1) {
-      // @ts-ignore
       data.todos.delete(index);
     }
   };
@@ -78,16 +123,16 @@ export const Todo: React.FC = () => {
     setNewTodoText(value);
   };
 
-  const handleNewRoom = async () => {
+  const handleTodoCreate = async () => {
     await load();
-    setRoomLoaded(true);
+    setDetailsEntered(true);
   };
 
   if (!loaded) {
     return <div>Loading...</div>;
   }
 
-  if (!roomLoaded) {
+  if (!detailsEntered) {
     return (
       <div className="container">
         <Modal
@@ -95,23 +140,29 @@ export const Todo: React.FC = () => {
           okButtonProps={{ disabled: true }}
           cancelButtonProps={{ disabled: true }}
         >
-          <p>
-            <Button onClick={handleNewRoom}>Start New Room</Button> / {roomName}
-          </p>
-          <p>-- OR --</p>
-          <p>
-            <p>Enter Room ID</p>
+          <div>
+            <p>Enter Your Name</p>
             <p>
               <Input
                 onChange={(e) => {
-                  setRoomName(e.target.value);
+                  setName(e.target.value);
+                }}
+              />
+            </p>
+          </div>
+          <div>
+            <p>Enter Todo ID</p>
+            <p>
+              <Input
+                onChange={(e) => {
+                  setTodoId(e.target.value);
                 }}
               />
             </p>
             <p>
-              <Button onClick={handleNewRoom}>Enter</Button>
+              <Button onClick={handleTodoCreate}>Enter</Button>
             </p>
-          </p>
+          </div>
         </Modal>
       </div>
     );
@@ -119,8 +170,37 @@ export const Todo: React.FC = () => {
 
   return (
     <div className="container">
+      <div className="avatars">
+        <Avatar.Group>
+          {presenceDetails?.users.keys().map((userId: string) => {
+            return (
+              <Avatar
+                style={{
+                  backgroundColor: presenceDetails.users[userId].userColor,
+                }}
+              >
+                {getInitials(presenceDetails.users[userId].name)}
+              </Avatar>
+            );
+          })}
+        </Avatar.Group>
+      </div>
+      {presenceDetails?.users.keys().map((userId: string) => {
+        return (
+          <div
+            style={{
+              top: presenceDetails.users[userId].mousePosition[0],
+              left: presenceDetails.users[userId].mousePosition[1],
+            }}
+            className="cursor"
+          >
+            <Cursor color={presenceDetails.users[userId].userColor} />
+            <div>{presenceDetails.users[userId].mouseState}</div>
+          </div>
+        );
+      })}
       <h1>My Todos</h1>
-      <p>Room ID / {roomName}</p>
+      <p>Todo ID / {todoId}</p>
       <div className="actions">
         <div>
           <Space direction="horizontal">

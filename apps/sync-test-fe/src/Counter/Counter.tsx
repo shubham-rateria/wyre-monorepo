@@ -15,13 +15,11 @@ export const Counter = () => {
 
   const sync = useSync({
     data: initialState,
-    collectionName: "Counter",
-    id: "counter1",
   });
 
   const load = async () => {
     setLoaded(false);
-    const loadedData = await sync.init();
+    const loadedData = await sync.init("counter11");
     setData(loadedData);
     setLoaded(true);
   };

@@ -11,6 +11,8 @@ interface RegisterParams {
   refid: string;
   data: any;
   onChange: (patch?: TPatch) => void;
+  name?: string;
+  onConnect?: () => void;
 }
 
 interface DestroyParams {
@@ -20,6 +22,8 @@ interface DestroyParams {
 export interface ObjectData {
   data: typeof ObservableObject | typeof ObservableArray;
   state: State;
+  onChange: (patch?: TPatch) => void;
+  onConnect?: () => void;
 }
 
 type State =
@@ -31,12 +35,22 @@ type State =
   | "ONLINE"
   | "OFFLINE";
 
+type UserDetails = {
+  name: string;
+  socketId: string;
+};
+
 export class _SyncManager {
-  socketEndpoint = "http://api.wyre.live:3002";
+  socketEndpoint = "http://localhost:3002";
   socketConfig = { path: "/socket.io" };
-  _io = io(this.socketEndpoint, this.socketConfig);
+  public _io = io(this.socketEndpoint, this.socketConfig);
   socketId: string = "";
   objects: { [refid: string]: ObjectData } = {};
+  peopleInRoom: { [refid: string]: UserDetails[] } = {};
+
+  constructor() {
+    this.init();
+  }
 
   async init() {
     this.socketId = await this.getSocketId();
@@ -45,17 +59,47 @@ export class _SyncManager {
   async getSocketId(): Promise<string> {
     return new Promise((resolve, reject) => {
       this._io.on("connect", () => {
+        /**
+         * resync all objects
+         */
+        Object.keys(this.objects).forEach(async (id: string) => {
+          this.objects[id].state = "REGISTERING";
+          await this.register(id, "");
+          this.objects[id].state = "REGISTERED";
+          this.objects[id].state = "SYNCING";
+          const syncData = await this.sync(id);
+          if (syncData) {
+            // @ts-ignore
+            this.objects[id].data.setRawValues(syncData);
+            this.objects[id].onChange();
+          }
+          if (this.objects[id].onConnect) {
+            // @ts-ignore
+            this.objects[id].onConnect();
+          }
+        });
+
         resolve(this._io.id);
       });
     });
   }
 
-  async register(roomName: string): Promise<void> {
+  async register(roomName: string, name: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      this._io.emit("register", roomName);
+      this._io.emit("register", roomName, name);
       this._io.on("registerAck:" + roomName, () => {
         console.log("[register]:ack", roomName);
         resolve();
+      });
+    });
+  }
+
+  async getUsersInRoom(roomName: string): Promise<UserDetails[]> {
+    return new Promise((resolve, reject) => {
+      this._io.emit("room:users", roomName);
+      this._io.on("room:users:" + roomName, (usersInRoom) => {
+        console.log("room:users:" + roomName, usersInRoom);
+        resolve(usersInRoom);
       });
     });
   }
@@ -113,6 +157,15 @@ export class _SyncManager {
   ) {
     this._io.on("syncPatches:" + roomName, (patch) => {
       console.log("[sync:newpatch]", patch);
+
+      if (patch.path === "/PEOPLE_IN_ROOM") {
+        if (!(patch.refid in this.peopleInRoom)) {
+          this.peopleInRoom[patch.refid] = [patch.value];
+        } else {
+          this.peopleInRoom[patch.refid].push(patch.value);
+        }
+      }
+
       // @ts-ignore
       data.applyPatch(patch);
       onChange(patch);
@@ -128,6 +181,14 @@ export class _SyncManager {
       delete this.objects[params.refid];
     }
     this._io.emit("destroy", params.refid);
+  }
+
+  async setupEventListener(eventName: string, callback: (data: any) => void) {
+    console.log("setting up event listener", eventName);
+    this._io.on(eventName, (data) => {
+      console.log("[event:received]", eventName, data);
+      callback(data);
+    });
   }
 
   async create(
@@ -171,9 +232,11 @@ export class _SyncManager {
     this.objects[params.refid] = {
       data: _data,
       state: "CREATED",
+      onChange: params.onChange,
+      onConnect: params.onConnect,
     };
     this.objects[params.refid].state = "REGISTERING";
-    await this.register(params.refid);
+    await this.register(params.refid, params.name || "");
     this.objects[params.refid].state = "REGISTERED";
     this.objects[params.refid].state = "SYNCING";
     const syncData = await this.sync(params.refid);
@@ -187,13 +250,14 @@ export class _SyncManager {
     await this.setupSyncRequestReceiver(params.refid);
     this.objects[params.refid].state = "ONLINE";
     await this.signalReadyForRoom(params.refid);
-    return _data;
+    return this.objects[params.refid].data;
   }
 
   getPatchSendHandler = (roomName: string, collectionName: string) => {
     const patchSendHandler = async (patch: TPatch) => {
       patch.refid = roomName;
       patch.collectionName = collectionName;
+      patch.actorId = this._io.id;
       console.log("[patchemit]", patch);
       this._io.emit("patch", patch);
     };

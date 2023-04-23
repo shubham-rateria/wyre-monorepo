@@ -14,7 +14,8 @@ export default [
     plugins: [
       strip({
         include: ["**/*.(mjs|js|ts)"],
-        functions: ["console.log"],
+        functions: ["console.log", "console.debug"],
+        debugger: false,
       }),
       typescript({
         exclude: ["**/__tests__", "**/*.test.ts"],
@@ -25,7 +26,7 @@ export default [
       {
         file: `dist/index.js`,
         format: "es",
-        sourcemap: true,
+        sourcemap: false,
       },
     ],
   }),
