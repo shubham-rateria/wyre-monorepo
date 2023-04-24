@@ -6,4 +6,5 @@ export type TPatch = {
   seq: number;
   collectionName?: string;
   refid?: string;
+  socketId?: string;
 };

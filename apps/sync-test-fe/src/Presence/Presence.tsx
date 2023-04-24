@@ -37,7 +37,9 @@ export const Presence: React.FC = () => {
   const initRoom = async () => {
     setLoaded(false);
     setLoading(true);
-    const presenceDetails = await presence.init("presenceroom20", name);
+    const presenceDetails = await presence.init({
+      presenceId: "presenceroom",
+    });
     setPresenceDetails(presenceDetails);
     setLoaded(true);
     setLoading(false);
