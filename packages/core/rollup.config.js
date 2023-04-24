@@ -9,6 +9,10 @@ const bundle = (config) => ({
   external: (id) => !/^[./]/.test(id),
 });
 
+//activ-aa5f055e6a02b702bc4e4f92db5eae85v3
+
+// npm config set '//api.keygen.sh/v1/accounts/9fb6c504-8f2b-4497-9025-424775ea665d/artifacts/:_authToken' 'activ-aa5f055e6a02b702bc4e4f92db5eae85v3'
+
 export default [
   bundle({
     plugins: [
