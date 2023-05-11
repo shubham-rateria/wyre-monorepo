@@ -260,6 +260,7 @@ export class _SyncManager {
       patch.actorId = this._io.id;
       patch.socketId = this._io.id;
       const buffer = notepack.encode(patch);
+      console.log("[patch:sending]", patch);
       this._io.emit("patch", roomName, buffer);
     };
     return patchSendHandler;

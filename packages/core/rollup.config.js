@@ -14,7 +14,7 @@ export default [
     plugins: [
       strip({
         include: ["**/*.(mjs|js|ts)"],
-        functions: ["console.log", "console.debug"],
+        functions: ["console.debug"],
         debugger: false,
       }),
       typescript({
