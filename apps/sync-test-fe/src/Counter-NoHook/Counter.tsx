@@ -1,7 +1,7 @@
 import React from "react";
-import { useSync } from "@wyre-client/core";
 import { InputNumber } from "antd";
 import styles from "./Counter.module.css";
+import { createWyre } from "@wyre-client/core";
 
 type SyncData = { counter: number };
 
@@ -12,14 +12,20 @@ const initialState: SyncData = {
 export const Counter = () => {
   const [loaded, setLoaded] = React.useState(false);
   const [data, setData] = React.useState<SyncData>(initialState);
+  const [value, setValue] = React.useState(0);
 
-  const sync = useSync({
-    data: initialState,
-  });
+  const onChange = () => {
+    console.log("[onChange]", data);
+    setValue((value) => value + 1);
+  };
 
   const load = async () => {
     setLoaded(false);
-    const loadedData = await sync.init("counter:1");
+    const sync = createWyre({
+      data: initialState,
+      onChange,
+    });
+    const loadedData = await sync.init("test:no-hook");
     setData(loadedData);
     setLoaded(true);
   };
@@ -27,6 +33,7 @@ export const Counter = () => {
   const changeInputNumberVal = (value: number) => {
     console.log("[changeInputNumberVal]", value);
     data.counter = value;
+    onChange();
   };
 
   React.useEffect(() => {

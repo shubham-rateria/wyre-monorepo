@@ -49,6 +49,10 @@ export const usePresence = () => {
     setValue((value) => value + 1);
   };
 
+  const onLocalChange = () => {
+    setValue((value) => value + 1);
+  };
+
   // const onConnect = useCallback(() => {
   //   const myDetails = {
   //     name: userName,
@@ -85,6 +89,7 @@ export const usePresence = () => {
       refid: presenceId,
       onChange,
       name: "",
+      onLocalChange,
       // onConnect: onConnect,
     });
 

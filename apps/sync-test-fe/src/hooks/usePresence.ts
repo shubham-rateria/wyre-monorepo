@@ -85,6 +85,7 @@ export const usePresence = () => {
       refid: presenceId,
       onChange,
       name: "",
+      onLocalChange: () => null,
       // onConnect: onConnect,
     });
 
