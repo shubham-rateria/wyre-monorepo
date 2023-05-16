@@ -46,6 +46,8 @@ interface ObservableArrayParams {
    * or when another user has overwritten my value
    */
   onChange: (patch?: TPatch) => void;
+
+  onLocalChange: () => void;
 }
 
 export default function ObservableArray({
@@ -54,6 +56,7 @@ export default function ObservableArray({
   actorId,
   collectionName,
   onChange,
+  onLocalChange,
 }: ObservableArrayParams) {
   var _self = this,
     /**
@@ -182,6 +185,7 @@ export default function ObservableArray({
           actorId,
           collectionName,
           onChange,
+          onLocalChange,
         });
         newItem.setRawValues(item.value);
         valueToSet = newItem;
@@ -192,6 +196,7 @@ export default function ObservableArray({
           actorId,
           collectionName,
           onChange,
+          onLocalChange,
         });
         newItem.setRawValues(item.value);
         valueToSet = newItem;
@@ -419,6 +424,7 @@ export default function ObservableArray({
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
       emitPatch(patch);
+      onLocalChange();
     }
     if (event.type === "itemadded") {
       const patch: TPatch = {
@@ -431,6 +437,7 @@ export default function ObservableArray({
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
       emitPatch(patch);
+      onLocalChange();
     }
     if (event.type === "itemdeleted") {
       const patch: TPatch = {
@@ -443,6 +450,7 @@ export default function ObservableArray({
       // const modPath = convertIndexedToCrdtPath(_self, patch);
       // patch.path = modPath;
       emitPatch(patch);
+      onLocalChange();
     }
   }
 
@@ -924,6 +932,7 @@ export default function ObservableArray({
         actorId,
         collectionName,
         onChange,
+        onLocalChange,
       });
     } else if (type === "object" && value !== null) {
       // return new ObservableObject(
@@ -938,6 +947,7 @@ export default function ObservableArray({
         object: value,
         emitPatch: handleNonPrimitiveChildChange(key),
         onChange,
+        onLocalChange,
       });
     } else {
       console.log(`We do not support ${type} yet.`);

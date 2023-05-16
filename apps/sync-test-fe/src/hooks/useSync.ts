@@ -42,6 +42,7 @@ export const useSync = (params: UseSyncParams) => {
       collectionName: params.collectionName ?? "",
       refid: id ?? "",
       onChange,
+      onLocalChange: () => null,
     });
     setLoadedData(loadedData);
     setValue((value) => value + 1);
