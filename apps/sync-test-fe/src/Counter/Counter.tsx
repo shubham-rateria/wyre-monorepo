@@ -1,5 +1,5 @@
 import React from "react";
-import { useSync } from "../hooks/useSync";
+import { useSync } from "@wyre-client/core";
 import { InputNumber } from "antd";
 import styles from "./Counter.module.css";
 
@@ -19,12 +19,13 @@ export const Counter = () => {
 
   const load = async () => {
     setLoaded(false);
-    const loadedData = await sync.init("counter11");
+    const loadedData = await sync.init("counter:1");
     setData(loadedData);
     setLoaded(true);
   };
 
   const changeInputNumberVal = (value: number) => {
+    console.log("[changeInputNumberVal]", value);
     data.counter = value;
   };
 
