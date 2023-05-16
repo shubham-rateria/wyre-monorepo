@@ -35,6 +35,7 @@ export const createWyre = (params: UseSyncParams) => {
       collectionName: params.collectionName ?? "",
       refid: id ?? "",
       onChange,
+      onLocalChange: () => null,
     });
     return loadedData;
   };
