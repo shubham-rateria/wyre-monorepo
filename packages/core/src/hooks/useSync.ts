@@ -5,6 +5,7 @@ interface UseSyncParams {
   data: any;
   collectionName?: string;
   onChange?: () => void;
+  onLocalChange?: () => void;
 }
 
 export const useSync = (params: UseSyncParams) => {
@@ -16,6 +17,14 @@ export const useSync = (params: UseSyncParams) => {
     console.log("[onChange]");
     if (params.onChange) {
       params.onChange();
+    }
+    setValue((value) => value + 1);
+  };
+
+  const onLocalChange = () => {
+    console.log("[onLocalChange]");
+    if (params.onLocalChange) {
+      params.onLocalChange();
     }
     setValue((value) => value + 1);
   };
@@ -42,6 +51,7 @@ export const useSync = (params: UseSyncParams) => {
       collectionName: params.collectionName ?? "",
       refid: id ?? "",
       onChange,
+      onLocalChange,
     });
     setLoadedData(loadedData);
     setValue((value) => value + 1);

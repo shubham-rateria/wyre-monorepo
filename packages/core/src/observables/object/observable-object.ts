@@ -33,6 +33,8 @@ interface ObservableObjectParams {
    * or when another user has overwritten my value
    */
   onChange: (patch?: TPatch) => void;
+
+  onLocalChange: () => void;
 }
 
 /**
@@ -46,6 +48,7 @@ export function ObservableObject({
   actorId,
   collectionName,
   onChange,
+  onLocalChange,
 }: ObservableObjectParams): void {
   var _self = this,
     _object: { [key: string]: TValue } = {},
@@ -68,6 +71,7 @@ export function ObservableObject({
         items: value,
         emitPatch: handleNonPrimitiveChildChange(key),
         onChange,
+        onLocalChange,
       });
     } else if (type === "object" && value !== null) {
       return new ObservableObject({
@@ -76,6 +80,7 @@ export function ObservableObject({
         collectionName,
         emitPatch: handleNonPrimitiveChildChange(key),
         onChange,
+        onLocalChange,
       });
     } else {
       console.log(`We do not support ${type} yet.`);
@@ -169,6 +174,7 @@ export function ObservableObject({
           items: [],
           emitPatch: handleNonPrimitiveChildChange(key),
           onChange,
+          onLocalChange,
         });
         arr.setRawValues(item.value);
         valueToSet = arr;
@@ -191,6 +197,7 @@ export function ObservableObject({
           collectionName,
           object: {},
           onChange,
+          onLocalChange,
         });
         obj.setRawValues(item.value);
         valueToSet = obj;
@@ -524,6 +531,7 @@ export function ObservableObject({
         seq: event.timestamp.seq,
       };
       emitPatch(patch);
+      onLocalChange();
     }
 
     if (event.type === "itemadded") {
@@ -535,6 +543,7 @@ export function ObservableObject({
         seq: event.timestamp.seq,
       };
       emitPatch(patch);
+      onLocalChange();
     }
 
     if (event.type === "itemdeleted") {
@@ -546,6 +555,7 @@ export function ObservableObject({
         seq: event.timestamp.seq,
       };
       emitPatch(patch);
+      onLocalChange();
     }
   }
 
