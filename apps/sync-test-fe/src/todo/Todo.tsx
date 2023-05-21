@@ -3,9 +3,8 @@ import { Avatar, Button, Col, Input, Row, Space } from "antd";
 import Modal from "antd/es/modal/Modal";
 import React, { useState } from "react";
 import { Cursor } from "../components/Cursor/Cursor";
-import { usePresence } from "../hooks/usePresence";
 // import { useSync } from "../hooks/useSync";
-import { useSync } from "@wyre-client/core";
+import { useSync, usePresence } from "@wyre-client/core";
 import { getInitials } from "../utils/get-initials";
 import "./Todo.css";
 
@@ -88,7 +87,7 @@ export const Todo: React.FC = () => {
      *
      */
     const presenceDetails = await presence.init({
-      presenceId: "todopresence:10",
+      presenceId: "todopresence:11",
     });
     presence.add({
       name,

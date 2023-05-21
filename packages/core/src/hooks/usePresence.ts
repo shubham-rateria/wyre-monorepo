@@ -1,4 +1,4 @@
-import { debounce } from "lodash";
+// import { debounce } from "lodash";
 import { useMemo, useState } from "react";
 import { SyncManager } from "../sync/sync";
 
@@ -43,13 +43,14 @@ let userName: string;
 export const usePresence = () => {
   const [value, setValue] = useState(0);
   // const [loadedData, setLoadedData] = useState(null);
-  const id = useMemo(() => SyncManager._io.id, [SyncManager._io.connected]);
+  const id = useMemo(() => (Math.random() + 1).toString(36).substring(7), []);
 
   const onChange = (patch: any) => {
     setValue((value) => value + 1);
   };
 
   const onLocalChange = () => {
+    console.log("[onLocalChange]");
     setValue((value) => value + 1);
   };
 
@@ -111,9 +112,10 @@ export const usePresence = () => {
 
     // setup listeners for my mouse position move
 
-    const setXY = debounce((x, y) => {
+    const setXY = (x, y) => {
+      console.log("[mouse:pos:change]", x, y);
       loadedData.users[id].mousePosition = [y, x];
-    }, 5);
+    };
 
     window.addEventListener("mousedown", (event) => {
       loadedData.users[id].mouseState = "down";
