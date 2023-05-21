@@ -87,7 +87,7 @@ export const Todo: React.FC = () => {
      *
      */
     const presenceDetails = await presence.init({
-      presenceId: "todopresence:11",
+      presenceId: "todopresence:100",
     });
     presence.add({
       name,
