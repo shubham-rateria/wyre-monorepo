@@ -11,8 +11,7 @@ import {
 } from "../utils/serialize";
 import { objectToJSON } from "../utils/toJSON";
 import { apply } from "./patch/patch";
-
-const cloneDeep = require("lodash/cloneDeep");
+import {cloneDeep} from 'lodash';
 
 type TSimpleValue = number | string | null | undefined | object;
 
