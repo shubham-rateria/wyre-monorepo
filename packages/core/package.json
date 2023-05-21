@@ -1,12 +1,18 @@
 {
   "name": "@wyre-client/core",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "",
   "private": false,
   "source": "src/index.ts",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/mjs/index.mjs",
+  "types": "./dist/mjs/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/mjs/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
