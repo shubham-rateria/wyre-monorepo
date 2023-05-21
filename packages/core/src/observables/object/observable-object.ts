@@ -11,7 +11,7 @@ import {
 } from "../utils/serialize";
 import { objectToJSON } from "../utils/toJSON";
 import { apply } from "./patch/patch";
-import {cloneDeep} from 'lodash';
+import lodash from "lodash";
 
 type TSimpleValue = number | string | null | undefined | object;
 
@@ -145,7 +145,7 @@ export function ObservableObject({
   function setRawValues(obj: {
     [key: string]: ObjectSerializedValue | ArraySerializedValue;
   }) {
-    const serializedObject = cloneDeep(obj);
+    const serializedObject = lodash.cloneDeep(obj);
     console.log("[setrawvalues:object]", serializedObject);
     /**
      * Iterate over the keys and check values
