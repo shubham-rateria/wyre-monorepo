@@ -16,6 +16,7 @@ describe("tests for array", () => {
       actorId: "",
       collectionName: "",
       emitPatch: (patch) => {},
+      onLocalChange: () => {},
     });
     expect(arr.length).toBe(items.length);
   });
@@ -27,6 +28,7 @@ describe("tests for array", () => {
       actorId: "",
       collectionName: "",
       emitPatch: (patch) => {},
+      onLocalChange: () => {},
     });
     arr[0] = 10;
     expect(arr[0]).toBe(10);
@@ -38,6 +40,7 @@ describe("tests for array", () => {
         actorId: "",
         collectionName: "",
         emitPatch: (patch) => {},
+        onLocalChange: () => {},
       });
       arr.push(10);
       expect(arr[0]).toBe(10);
@@ -51,6 +54,7 @@ describe("tests for array", () => {
       actorId: "",
       collectionName: "",
       emitPatch: (patch) => {},
+      onLocalChange: () => {},
     });
     arr.push(10);
     expect(arr[3]).toBe(10);
@@ -64,6 +68,7 @@ describe("tests for array", () => {
       actorId: "",
       collectionName: "",
       emitPatch: (patch) => {},
+      onLocalChange: () => {},
     });
     const toAdd = 5;
     for (let i = 0; i < toAdd; i++) {
@@ -80,6 +85,7 @@ describe("tests for array", () => {
       actorId: "",
       collectionName: "",
       emitPatch: (patch) => {},
+      onLocalChange: () => {},
     });
     let counter = 0;
     arr.map((val) => {
@@ -96,6 +102,7 @@ describe("tests for array", () => {
         actorId: "",
         collectionName: "",
         emitPatch: (patch) => {},
+        onLocalChange: () => {},
       });
       let counter = 0;
       for (let i = 0; i < pushitems.length; i++) {
@@ -112,6 +119,7 @@ describe("tests for array", () => {
         actorId: "",
         collectionName: "",
         emitPatch: (patch) => {},
+        onLocalChange: () => {},
       });
       for (let i = 0; i < 40; i++) {
         arr.push(i);
@@ -128,6 +136,7 @@ describe("tests for array", () => {
         actorId: "",
         collectionName: "",
         emitPatch: (patch) => {},
+        onLocalChange: () => {},
       });
       expect(arr[0]).toBeInstanceOf(ObservableArray);
     });
@@ -139,6 +148,7 @@ describe("tests for array", () => {
       actorId: "",
       collectionName: "",
       emitPatch: (patch) => {},
+      onLocalChange: () => {},
     });
     expect(arr[0]).toBeInstanceOf(ObservableObject);
   });
@@ -157,6 +167,7 @@ describe("tests for array", () => {
       actorId: "",
       collectionName: "",
       emitPatch: (patch) => {},
+      onLocalChange: () => {},
     });
     arr.applyPatch(patch);
     expect(arr[0]).toBe(10);

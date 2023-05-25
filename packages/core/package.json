@@ -1,6 +1,6 @@
 {
   "name": "@wyre-client/core",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "description": "",
   "private": false,
   "source": "src/index.ts",
@@ -23,7 +23,7 @@
     "prepublish": "npm run build",
     "publish:pack": "npm pack --pack-destination dist",
     "publish:upload": "node --experimental-json-modules build-scripts/publish.js",
-    "publish": "semantic-release && npm run publish:upload",
+    "publish-disabled": "semantic-release && npm run publish:upload",
     "semantic-release": "semantic-release"
   },
   "keywords": [],
