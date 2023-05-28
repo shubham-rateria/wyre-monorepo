@@ -63,22 +63,22 @@ export class _SyncManager {
         /**
          * resync all objects
          */
-        Object.keys(this.objects).forEach(async (id: string) => {
-          this.objects[id].state = "REGISTERING";
-          await this.register(id, "");
-          this.objects[id].state = "REGISTERED";
-          this.objects[id].state = "SYNCING";
-          const syncData = await this.sync(id);
-          if (syncData) {
-            // @ts-ignore
-            this.objects[id].data.setRawValues(syncData);
-            this.objects[id].onChange();
-          }
-          if (this.objects[id].onConnect) {
-            // @ts-ignore
-            this.objects[id].onConnect();
-          }
-        });
+        // Object.keys(this.objects).forEach(async (id: string) => {
+        //   this.objects[id].state = "REGISTERING";
+        //   await this.register(id, "");
+        //   this.objects[id].state = "REGISTERED";
+        //   this.objects[id].state = "SYNCING";
+        //   const syncData = await this.sync(id);
+        //   if (syncData) {
+        //     // @ts-ignore
+        //     this.objects[id].data.setRawValues(syncData);
+        //     this.objects[id].onChange();
+        //   }
+        //   if (this.objects[id].onConnect) {
+        //     // @ts-ignore
+        //     this.objects[id].onConnect();
+        //   }
+        // });
 
         resolve(this._io.id);
       });
