@@ -121,6 +121,12 @@ export class _SyncManager {
 
       this._io.on("sync:response:" + roomName, (dataBuffer) => {
         // const syncData = cloneDeep(data);
+        console.log(
+          "[sync:res]:dataBuffer",
+          roomName,
+          dataBuffer,
+          dataBuffer.toString()
+        );
         let data = notepack.decode(new Uint8Array(dataBuffer));
         console.log("[sync:res]", roomName, data);
         clearTimeout(timer);
