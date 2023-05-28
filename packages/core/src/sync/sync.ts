@@ -121,16 +121,16 @@ export class _SyncManager {
 
       this._io.on("sync:response:" + roomName, (dataBuffer) => {
         // const syncData = cloneDeep(data);
-        console.log(
-          "[sync:res]:dataBuffer",
-          roomName,
-          dataBuffer,
-          dataBuffer.toString()
-        );
-        let data = notepack.decode(new Uint8Array(dataBuffer));
-        console.log("[sync:res]", roomName, data);
+        // console.log(
+        //   "[sync:res]:dataBuffer",
+        //   roomName,
+        //   dataBuffer,
+        //   dataBuffer.toString()
+        // );
+        // let data = notepack.decode(new Uint8Array(dataBuffer));
+        console.log("[sync:res]", roomName, dataBuffer);
         clearTimeout(timer);
-        resolve(data);
+        resolve(dataBuffer);
       });
     });
   }
@@ -147,8 +147,8 @@ export class _SyncManager {
         this._io.emit("sync:no-sync", roomName, socketId);
       }
       const data = serialize(this.objects[roomName].data);
-      const dataBuffer = notepack.encode(data);
-      this._io.emit("sync:response:" + roomName, dataBuffer, socketId);
+      // const dataBuffer = notepack.encode(data);
+      this._io.emit("sync:response:" + roomName, data, socketId);
       console.log("[sync:request] sent", data, "sync:response:" + roomName);
     });
   }
@@ -161,7 +161,8 @@ export class _SyncManager {
     this._io.on("syncPatches:" + roomName, (patchBuffer) => {
       console.log("[sync:newpatch:buffer]", patchBuffer);
 
-      let patch = notepack.decode(new Uint8Array(patchBuffer));
+      // let patch = notepack.decode(new Uint8Array(patchBuffer));
+      let patch = patchBuffer;
 
       console.log("[sync:newpatch]", patch);
 
@@ -267,9 +268,9 @@ export class _SyncManager {
       patch.collectionName = collectionName;
       patch.actorId = this._io.id;
       patch.socketId = this._io.id;
-      const buffer = notepack.encode(patch);
+      // const buffer = notepack.encode(patch);
       console.log("[patch:sending]", patch);
-      this._io.emit("patch", roomName, buffer);
+      this._io.emit("patch", roomName, patch);
     };
     return patchSendHandler;
   };
