@@ -26,12 +26,12 @@ export default [
       {
         file: `dist/mjs/index.js`,
         format: "es",
-        sourcemap: true,
+        sourcemap: false,
       },
       {
         file: `dist/cjs/index.cjs`,
         format: "cjs",
-        sourcemap: true,
+        sourcemap: false,
       },
     ],
   }),
@@ -40,7 +40,7 @@ export default [
     output: {
       file: `dist/index.d.ts`,
       format: "es",
-      sourcemap: true,
+      sourcemap: false,
     },
   }),
 ];
