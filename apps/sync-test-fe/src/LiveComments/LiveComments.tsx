@@ -26,13 +26,6 @@ export const LiveComments: React.FC = () => {
   const init = async () => {
     setLoading(true);
     const data = await sync.init("live:comments");
-    // const presenceDetails = await presence.init({
-    //   presenceId: "wyre-demo:live-comments:presence",
-    // });
-    // presence.add({
-    //   name: myName,
-    // });
-    // setPresenceDetails(presenceDetails);
     setData(data);
     setLoading(false);
   };
