@@ -1,0 +1,113 @@
+.Container {
+    width: 100vw;
+    height: 100vh;
+    background: url('http://localhost:3000/bg-1.jpeg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    cursor: none;
+}
+
+.NewComment, .Comment {
+    padding: 1rem;
+    border: 1px solid rgb(199, 199, 199);
+    border-radius: 4px;
+    background: white;
+    -webkit-box-shadow: 0px 8px 24px 0px rgba(0,0,0,0.25);
+-moz-box-shadow: 0px 8px 24px 0px rgba(0,0,0,0.25);
+box-shadow: 0px 8px 24px 0px rgba(0,0,0,0.25);
+}
+
+.Comment {
+    display: flex;
+    flex-direction: column;
+}
+
+.Comment .InnerContainer {
+    display: flex;
+    flex-direction: row;
+}
+
+.Comment .AvContainer {
+    /* width: 30%; */
+}
+
+.Comment .Avatar {
+    height: 30px;
+    width: 30px;
+    border-radius: 15px;
+    /* background-color: rgb(94, 94, 247); */
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.Comment .Avatar, .Comment .Name {
+    font-size: 9pt;
+    font-weight: 400;
+    margin-right: 10px;
+}
+
+.Comment .Name {
+    margin-bottom: 2px;
+}
+
+.Comment .Details {
+    font-size: 9pt;
+    font-weight: 500;
+}
+
+.Comment .Name {
+    color: rgb(39, 39, 39);
+}
+
+.NewComment textarea {
+    border: 1px solid rgb(223, 223, 223);
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+.NewComment .Action {
+    display: flex;
+    flex-direction: row;
+}
+
+.NewComment .Action button {
+    margin-right: 1px;
+}
+
+.Reply {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9pt;
+    color: white;
+    padding-right: 10px;
+    margin-top: 10px;
+    height: 30px;
+    border-radius: 15px;
+    background: rgb(235, 235, 235);
+}
+
+.Btn {
+    padding: 0.5rem 1rem;
+    font-size: 9pt;
+    border-radius: 3px;
+    border: none;
+    background:rgba(94, 94, 247, 0.759);
+    margin-right: 2px;
+    color: white;
+    font-weight: 600;
+}
+
+.BtnCancel {
+    padding: 0.5rem 1rem;
+    font-size: 9pt;
+    border-radius: 3px;
+    border: none;
+    background:rgba(220, 220, 220, 0.759);
+    margin-right: 2px;
+    color: rgb(46, 46, 46);
+    font-weight: 600;
+}

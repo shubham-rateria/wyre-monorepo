@@ -1,7 +1,7 @@
 .OuterContainer {
   height: 100vh;
   width: 100vw;
-  background: #222222;
+  background: #ffffff;
   cursor: none;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: none;
@@ -36,7 +36,9 @@
 }
 
 .MouseStatusUp {
-  background: red;
+  border: 0.5px solid white;
+  border-radius: 2px;
+  background: rgb(231, 75, 75);
   color: white;
 }
 
