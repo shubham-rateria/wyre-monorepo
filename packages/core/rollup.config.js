@@ -40,7 +40,7 @@ export default [
     output: {
       file: `dist/index.d.ts`,
       format: "es",
-      sourcemap: true,
+      sourcemap: false,
     },
   }),
 ];
