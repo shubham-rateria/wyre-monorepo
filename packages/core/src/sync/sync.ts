@@ -110,9 +110,7 @@ export class _SyncManager {
 
   async setupAliveListener() {
     this._io.on("sync:alive", (callback) => {
-      callback({
-        alive: true,
-      });
+      callback("ok");
     });
   }
 
