@@ -119,16 +119,16 @@ export class _SyncManager {
     this._io.on(
       "sync:ready",
       ((roomName, callback) => {
-        if (!(roomName in this.objects)) {
-          callback({
-            ready: false,
-          });
-        } else if (
+        if (
           roomName in this.objects &&
           this.objects[roomName].state === "ONLINE"
         ) {
           callback({
             ready: true,
+          });
+        } else {
+          callback({
+            ready: false,
           });
         }
       }).bind(this)
