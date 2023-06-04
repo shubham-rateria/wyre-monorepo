@@ -58,6 +58,7 @@ export class _SyncManager {
   async init() {
     this.socketId = await this.getSocketId();
     this.setupAliveListener();
+    this.setupSyncReadyListener();
   }
 
   async getSocketId(): Promise<string> {
@@ -112,6 +113,26 @@ export class _SyncManager {
     this._io.on("sync:alive", (callback) => {
       callback("ok");
     });
+  }
+
+  async setupSyncReadyListener() {
+    this._io.on(
+      "sync:ready",
+      ((roomName, callback) => {
+        if (
+          roomName in this.objects &&
+          this.objects[roomName].state === "ONLINE"
+        ) {
+          callback({
+            ready: true,
+          });
+        } else {
+          callback({
+            ready: false,
+          });
+        }
+      }).bind(this)
+    );
   }
 
   async sync(roomName: string) {
@@ -174,23 +195,10 @@ export class _SyncManager {
       let patch = patchBuffer;
 
       console.log("[sync:newpatch]", patch);
-
-      if (patch.path === "/PEOPLE_IN_ROOM") {
-        if (!(patch.refid in this.peopleInRoom)) {
-          this.peopleInRoom[patch.refid] = [patch.value];
-        } else {
-          this.peopleInRoom[patch.refid].push(patch.value);
-        }
-      }
-
       // @ts-ignore
       data.applyPatch(patch);
       // onChange(patch);
     });
-  }
-
-  async signalReadyForRoom(roomName: string) {
-    this._io.emit("ready:room", roomName);
   }
 
   async destroy(params: DestroyParams) {
@@ -273,7 +281,6 @@ export class _SyncManager {
     await this.setupPatchListener(_data, params.onChange, params.refid);
     await this.setupSyncRequestReceiver(params.refid);
     this.objects[params.refid].state = "ONLINE";
-    await this.signalReadyForRoom(params.refid);
     return this.objects[params.refid].data;
   }
 
