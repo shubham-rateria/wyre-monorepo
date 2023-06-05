@@ -44,8 +44,9 @@ type UserDetails = {
 
 export class _SyncManager {
   // socketEndpoint = "http://api.wyre.live:3002";
-  socketEndpoint = "https://api-prod.wyre.live";
+  // socketEndpoint = "https://api-prod.wyre.live";
   // socketEndpoint = "http://localhost:3002";
+  socketEndpoint = "http://3.109.46.246:3002";
   socketConfig = { path: "/socket.io" };
   public _io = io(this.socketEndpoint, this.socketConfig);
   socketId: string = "";
