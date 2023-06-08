@@ -4,6 +4,7 @@ interface UseSyncParams {
   data: any;
   collectionName?: string;
   onChange?: () => void;
+  onSyncError?: (message: string) => void;
 }
 
 export const createWyre = (params: UseSyncParams) => {
@@ -36,6 +37,7 @@ export const createWyre = (params: UseSyncParams) => {
       refid: id ?? "",
       onChange,
       onLocalChange: () => null,
+      onSyncError: params.onSyncError,
     });
     return loadedData;
   };

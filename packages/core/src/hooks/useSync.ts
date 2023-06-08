@@ -6,6 +6,7 @@ interface UseSyncParams {
   collectionName?: string;
   onChange?: () => void;
   onLocalChange?: () => void;
+  onSyncError?: (message: string) => void;
 }
 
 export const useSync = (params: UseSyncParams) => {
@@ -52,6 +53,7 @@ export const useSync = (params: UseSyncParams) => {
       refid: id ?? "",
       onChange,
       onLocalChange,
+      onSyncError: params.onSyncError,
     });
     setLoadedData(loadedData);
     setValue((value) => value + 1);

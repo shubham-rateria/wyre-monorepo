@@ -8,10 +8,11 @@ async function startStreamer() {
     data: { todos: [] },
   });
   const data = await sync.init("streamer:testing:2");
-  for (let i = 0; i < 20; i++) {
+  await sleep(5000);
+  for (let i = 0; i < 200; i++) {
     data.todos.push(i);
     console.log("[streaming]", i);
-    await sleep(2000);
+    await sleep(1000);
   }
 }
 
