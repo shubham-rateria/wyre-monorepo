@@ -44,10 +44,15 @@ type UserDetails = {
 
 export class _SyncManager {
   // socketEndpoint = "http://api.wyre.live:3002";
+  // socketEndpoint = "https://api-prod.wyre.live";
   socketEndpoint = "https://api-dev.wyre.live";
   // socketEndpoint = "http://localhost:3002";
   // socketEndpoint = "http://3.109.46.246:3002";
-  socketConfig = { path: "/socket.io" };
+  socketConfig = {
+    path: "/socket.io",
+    transports: ["websocket"],
+    upgrade: false,
+  };
   public _io = io(this.socketEndpoint, this.socketConfig);
   socketId: string = "";
   objects: { [refid: string]: ObjectData } = {};
@@ -287,7 +292,9 @@ export class _SyncManager {
       onConnect: params.onConnect,
     };
     this.objects[params.refid].state = "REGISTERING";
+    console.log("registering");
     await this.register(params.refid, params.name || "");
+    console.log("registered");
     this.objects[params.refid].state = "REGISTERED";
     this.objects[params.refid].state = "SYNCING";
     try {
