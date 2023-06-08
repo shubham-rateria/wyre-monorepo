@@ -5,6 +5,7 @@ import { TPatch } from "../types/patch.type";
 import ObservableArray from "../observables/array/observable-array";
 import isArrayType from "../helpers/isArrayType";
 import notepack from "notepack.io";
+import sleep from "../utils/sleep";
 
 interface RegisterParams {
   collectionName: string;
@@ -58,12 +59,14 @@ export class _SyncManager {
   objects: { [refid: string]: ObjectData } = {};
   peopleInRoom: { [refid: string]: UserDetails[] } = {};
   wasPreviouslyDisconnected: boolean = false;
+  initialized = false;
 
   constructor() {
     this.init();
   }
 
   async init() {
+    this.initialized = true;
     this.socketId = await this.getSocketId();
     this.setupAliveListener();
     this.setupSyncReadyListener();
@@ -76,6 +79,7 @@ export class _SyncManager {
       console.log("disconnected...");
       this.wasPreviouslyDisconnected = true;
     });
+    this.initialized = false;
   }
 
   async reSync() {
@@ -250,6 +254,11 @@ export class _SyncManager {
   ): Promise<typeof ObservableObject | typeof ObservableArray> {
     if (params.refid in this.objects) {
       return this.objects[params.refid].data;
+    }
+
+    // wait for initialization
+    while (!this.initialized) {
+      await sleep(100);
     }
 
     /**
