@@ -44,7 +44,7 @@ type UserDetails = {
 
 export class _SyncManager {
   // socketEndpoint = "http://api.wyre.live:3002";
-  socketEndpoint = "https://api-prod.wyre.live";
+  socketEndpoint = "https://api-dev.wyre.live";
   // socketEndpoint = "http://localhost:3002";
   // socketEndpoint = "http://3.109.46.246:3002";
   socketConfig = { path: "/socket.io" };
@@ -52,6 +52,7 @@ export class _SyncManager {
   socketId: string = "";
   objects: { [refid: string]: ObjectData } = {};
   peopleInRoom: { [refid: string]: UserDetails[] } = {};
+  wasPreviouslyDisconnected: boolean = false;
 
   constructor() {
     this.init();
@@ -61,30 +62,51 @@ export class _SyncManager {
     this.socketId = await this.getSocketId();
     this.setupAliveListener();
     this.setupSyncReadyListener();
+
+    this._io.on("reconnect", () => {
+      console.log("reconnected...");
+    });
+
+    this._io.on("disconnect", () => {
+      console.log("disconnected...");
+      this.wasPreviouslyDisconnected = true;
+    });
+  }
+
+  async reSync() {
+    Object.keys(this.objects).forEach(async (id: string) => {
+      this.objects[id].state = "REGISTERING";
+      await this.register(id, "");
+      this.objects[id].state = "REGISTERED";
+      this.objects[id].state = "SYNCING";
+      try {
+        const syncData = await this.sync(id);
+        if (syncData) {
+          // @ts-ignore
+          this.objects[id].data.setRawValues(syncData);
+        }
+      } catch (error) {
+        console.error("Could not initial sync.");
+      }
+
+      if (this.objects[id].onConnect) {
+        // @ts-ignore
+        this.objects[id].onConnect();
+      }
+      this.objects[id].onChange();
+    });
   }
 
   async getSocketId(): Promise<string> {
     return new Promise((resolve, reject) => {
       this._io.on("connect", () => {
-        /**
-         * resync all objects
-         */
-        // Object.keys(this.objects).forEach(async (id: string) => {
-        //   this.objects[id].state = "REGISTERING";
-        //   await this.register(id, "");
-        //   this.objects[id].state = "REGISTERED";
-        //   this.objects[id].state = "SYNCING";
-        //   const syncData = await this.sync(id);
-        //   if (syncData) {
-        //     // @ts-ignore
-        //     this.objects[id].data.setRawValues(syncData);
-        //     this.objects[id].onChange();
-        //   }
-        //   if (this.objects[id].onConnect) {
-        //     // @ts-ignore
-        //     this.objects[id].onConnect();
-        //   }
-        // });
+        if (this.wasPreviouslyDisconnected) {
+          console.log("reconnected...");
+          this.reSync();
+        } else {
+          console.log("connected...");
+        }
+        this.wasPreviouslyDisconnected = false;
 
         resolve(this._io.id);
       });
