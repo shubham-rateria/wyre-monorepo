@@ -11,7 +11,7 @@ const {
 } = require("./db");
 
 const URL = process.env.URL || "https://api-prod.wyre.live";
-const MAX_CLIENTS = 500;
+const MAX_CLIENTS = 100;
 const POLLING_PERCENTAGE = 0.05;
 const CLIENT_CREATION_INTERVAL_IN_MS = 50;
 const EMIT_INTERVAL_IN_MS = 2000;
