@@ -2,7 +2,7 @@ import { useState } from "react";
 import { SyncManager } from "../sync/sync";
 
 interface UseSyncParams {
-  data: any;
+  data?: any;
   collectionName?: string;
   onChange?: () => void;
   onLocalChange?: () => void;
@@ -44,11 +44,14 @@ export const useSync = (params: UseSyncParams) => {
    * @param id the unique identifier for the data
    * @returns a javascript object that is real time and shared
    */
-  const init: (id: string) => Promise<any> = async (id: string) => {
+  const init: (id: string) => Promise<any> = async (
+    id: string,
+    initialData?: any
+  ) => {
     console.log("[useSync:init]");
     setId(id);
     const loadedData: any = await SyncManager.create({
-      data: params.data,
+      data: params.data || initialData || {},
       collectionName: params.collectionName ?? "",
       refid: id ?? "",
       onChange,
