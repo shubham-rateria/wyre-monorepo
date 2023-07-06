@@ -44,9 +44,9 @@ type UserDetails = {
 };
 
 export class _SyncManager {
-  // socketEndpoint = "http://api.wyre.live:3002";
+  socketEndpoint = "http://api.wyre.live:3003";
   // socketEndpoint = "https://api-prod.wyre.live";
-  socketEndpoint = "https://api-dev.wyre.live";
+  // socketEndpoint = "https://api-dev.wyre.live";
   // socketEndpoint = "http://localhost:3003";
   // socketEndpoint = "http://3.109.46.246:3002";
   socketConfig = {
