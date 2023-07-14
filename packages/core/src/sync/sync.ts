@@ -44,10 +44,11 @@ type UserDetails = {
 };
 
 export class _SyncManager {
-  socketEndpoint = "http://api.wyre.live:3003";
+  // socketEndpoint = "http://wyre-backend-dev-1112696086.ap-south-1.elb.amazonaws.com";
   // socketEndpoint = "https://api-prod.wyre.live";
+  socketEndpoint = "https://api.wyre.live";
   // socketEndpoint = "https://api-dev.wyre.live";
-  // socketEndpoint = "http://localhost:3003";
+  // socketEndpoint = "https://localhost";
   // socketEndpoint = "http://3.109.46.246:3002";
   socketConfig = {
     path: "/socket.io",
