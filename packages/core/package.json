@@ -23,7 +23,7 @@
     "prepublish": "npm run build",
     "publish:pack": "npm pack --pack-destination dist",
     "publish:upload": "node --experimental-json-modules build-scripts/publish.js",
-    "publish": "semantic-release && npm run publish",
+    "publish": "npm run publish:pack && semantic-release",
     "semantic-release": "semantic-release"
   },
   "keywords": [],
