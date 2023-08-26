@@ -1,6 +1,6 @@
 {
   "name": "@wyre-client/core",
-  "version": "0.6.4",
+  "version": "0.6.10",
   "description": "",
   "private": false,
   "source": "src/index.ts",
@@ -25,6 +25,9 @@
     "publish:upload": "node --experimental-json-modules build-scripts/publish.js",
     "publish": "npm run publish:pack && semantic-release",
     "semantic-release": "semantic-release"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [],
   "author": "Rateria",
